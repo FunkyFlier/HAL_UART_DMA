@@ -16,7 +16,7 @@ void UARTRXCallBackHandler(UART_STRUCT*);
 void DoubleBufferCreate(DoubleBuffer_t *, uint8_t *, uint8_t *,int );
 int DoubleBufferWrite(DoubleBuffer_t *, uint8_t *, int );
 void DoubleBufferSwap(DoubleBuffer_t *);
-
+int RingBufferWriteByte(RingBuffer_t*, uint8_t*);
 #ifdef LOOP_BACK_DEMO
 uint8_t testMessage0[] = "****************************\r\n";
 #ifdef UART_1
@@ -400,6 +400,67 @@ int UARTWriteBuffer(UART_STRUCT* uartS, uint8_t* buff, int n) {
 		if (uartS->TXDMA == true){
 			if (HAL_UART_Transmit_DMA(uartS->uartHandler, uartS->txBuffer->buffer, DoubleBufferAvailable(uartS->txBuffer)) != HAL_BUSY) {
 				DoubleBufferSwap(uartS->txBuffer);
+
+			}/*else{
+				if(uartS->uartHandler->gState == HAL_UART_STATE_READY){
+					uartS->uartHandler->gState = HAL_UART_STATE_BUSY_TX;
+
+					uartS->uartHandler->pTxBuffPtr = uartS->txBuffer->buffer;
+					uartS->uartHandler->TxXferSize = DoubleBufferAvailable(uartS->txBuffer);
+					uartS->uartHandler->TxXferCount = uartS->uartHandler->TxXferSize;
+
+					uartS->uartHandler->ErrorCode = HAL_UART_ERROR_NONE;
+					uint32_t *tmp = (uint32_t*) &uartS->uartHandler->pTxBuffPtr;
+					HAL_DMA_Start_IT(uartS->uartHandler->hdmatx, *(uint32_t*)tmp, (uint32_t)&uartS->uartHandler->Instance->DR, uartS->uartHandler->TxXferSize);
+					__HAL_UART_CLEAR_FLAG(uartS->uartHandler, UART_FLAG_TC);
+					SET_BIT(uartS->uartHandler->Instance->CR3, USART_CR3_DMAT);
+					DoubleBufferSwap(uartS->txBuffer);
+				  }
+			}*/
+		}else{
+			if (HAL_UART_Transmit_IT(uartS->uartHandler, uartS->txBuffer->buffer, DoubleBufferAvailable(uartS->txBuffer)) != HAL_BUSY) {
+				DoubleBufferSwap(uartS->txBuffer);
+			}/*else{
+				if (uartS->uartHandler->gState == HAL_UART_STATE_READY){
+					uartS->uartHandler->gState = HAL_UART_STATE_BUSY_TX;
+					uartS->uartHandler->pTxBuffPtr = uartS->txBuffer->buffer;
+					uartS->uartHandler->TxXferSize = DoubleBufferAvailable(uartS->txBuffer);
+					uartS->uartHandler->TxXferCount = DoubleBufferAvailable(uartS->txBuffer);
+					uartS->uartHandler->ErrorCode = HAL_UART_ERROR_NONE;
+					SET_BIT(uartS->uartHandler->Instance->CR1, USART_CR1_TXEIE);
+					DoubleBufferSwap(uartS->txBuffer);
+				}
+			}*/
+		}
+
+	}
+	return n;
+
+}
+void UARTTXCallBackHandler(UART_STRUCT* uartS) {
+	if (uartS->txBuffer->writing == true) {
+		return;
+	}
+	if (DoubleBufferAvailable(uartS->txBuffer) > 0){
+		if (uartS->TXDMA == true){
+			if (HAL_UART_Transmit_DMA(uartS->uartHandler, uartS->txBuffer->buffer, DoubleBufferAvailable(uartS->txBuffer)) != HAL_BUSY) {
+				DoubleBufferSwap(uartS->txBuffer);
+
+			}else{
+				if(uartS->uartHandler->gState == HAL_UART_STATE_READY){
+					uartS->uartHandler->gState = HAL_UART_STATE_BUSY_TX;
+
+					uartS->uartHandler->pTxBuffPtr = uartS->txBuffer->buffer;
+					uartS->uartHandler->TxXferSize = DoubleBufferAvailable(uartS->txBuffer);
+					uartS->uartHandler->TxXferCount = uartS->uartHandler->TxXferSize;
+
+					uartS->uartHandler->ErrorCode = HAL_UART_ERROR_NONE;
+					uint32_t *tmp = (uint32_t*) &uartS->uartHandler->pTxBuffPtr;
+					HAL_DMA_Start_IT(uartS->uartHandler->hdmatx, *(uint32_t*)tmp, (uint32_t)&uartS->uartHandler->Instance->DR, uartS->uartHandler->TxXferSize);
+					__HAL_UART_CLEAR_FLAG(uartS->uartHandler, UART_FLAG_TC);
+					SET_BIT(uartS->uartHandler->Instance->CR3, USART_CR3_DMAT);
+					DoubleBufferSwap(uartS->txBuffer);
+				  }
 			}
 		}else{
 			if (HAL_UART_Transmit_IT(uartS->uartHandler, uartS->txBuffer->buffer, DoubleBufferAvailable(uartS->txBuffer)) != HAL_BUSY) {
@@ -416,34 +477,6 @@ int UARTWriteBuffer(UART_STRUCT* uartS, uint8_t* buff, int n) {
 				}
 			}
 		}
-
-	}
-	return n;
-
-}
-void UARTTXCallBackHandler(UART_STRUCT* uartS) {
-	if (uartS->txBuffer->writing == true) {
-		return;
-	}
-	if (DoubleBufferAvailable(uartS->txBuffer) > 0){
-		if (uartS->TXDMA == true){
-			if (HAL_UART_Transmit_DMA(uartS->uartHandler, uartS->txBuffer->buffer, DoubleBufferAvailable(uartS->txBuffer)) != HAL_BUSY) {
-				DoubleBufferSwap(uartS->txBuffer);
-			}
-		}else{
-			if (DoubleBufferAvailable(uartS->txBuffer) > 0){
-				if (uartS->uartHandler->gState == HAL_UART_STATE_READY){
-					uartS->uartHandler->gState = HAL_UART_STATE_BUSY_TX;
-					uartS->uartHandler->pTxBuffPtr = uartS->txBuffer->buffer;
-					uartS->uartHandler->TxXferSize = DoubleBufferAvailable(uartS->txBuffer);
-					uartS->uartHandler->TxXferCount = DoubleBufferAvailable(uartS->txBuffer);
-					uartS->uartHandler->ErrorCode = HAL_UART_ERROR_NONE;
-					SET_BIT(uartS->uartHandler->Instance->CR1, USART_CR1_TXEIE);
-					DoubleBufferSwap(uartS->txBuffer);
-				}
-
-			}
-		}
 	}
 }
 int UARTAvailabe(UART_STRUCT* uartS) {
@@ -453,9 +486,19 @@ int UARTAvailabe(UART_STRUCT* uartS) {
 int UARTGetBuffer(UART_STRUCT* uartS, uint8_t* buff, int n) {
 	return RingBufferRead(uartS->rxBuffer,buff,n);
 }
-
+int RingBufferWriteByte(RingBuffer_t *rb, uint8_t *in) {
+	rb->readIdxTemp = rb->readIdx;
+	if (rb->readIdxTemp == ((rb->writeIdx + 1) % rb->size)){
+		return -1;
+	}
+	rb->buffer[rb->writeIdx] = in[0];
+	rb->writeIdx = (rb->writeIdx + (1)) % rb->size;
+	return 1;
+}
 void UARTRXCallBackHandler(UART_STRUCT* uartS) {
 	//faster than copying the same byte to the ring buffer every time?
+	//that is a lot of stuff to do to avoid a single copy every iteration
+	//logical for IT based RX since for each byte the interrupt has to be reenabled regardless
 	uartS->rxBuffer->readIdxTemp = uartS->rxBuffer->readIdx;
 
 	if (uartS->rxBuffer->readIdxTemp == ((uartS->rxBuffer->writeIdx + 1) % uartS->rxBuffer->size)){

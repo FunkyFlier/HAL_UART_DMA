@@ -71,7 +71,7 @@
 //#define UART_1
 #define UART_2
 #define UART_1_DMA_TX
-#define UART_1_DMA_RX
+//#define UART_1_DMA_RX
 //#define UART_6
 
 
