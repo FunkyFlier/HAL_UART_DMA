@@ -73,11 +73,20 @@ void UARTInit() {
 		RingBufferCreate(&UART_2_RX_RING, UART_2_RX_BUFFER,(int) UART_RING_BUF_SIZE_RX);
 		DoubleBufferCreate(&UART_2_TX_DB, UART_2_TX_BUFFER1,UART_2_TX_BUFFER2,(int) UART_RING_BUF_SIZE_TX);
 		UARTSetup(&UART_2_STRUCT, &huart2, &UART_2_RX_RING, &UART_2_TX_DB,ISRBuffer_2);
-		if (HAL_UART_Receive_DMA(UART_2_STRUCT.uartHandler, UART_2_STRUCT.rxBuffer->buffer, 1)!= HAL_OK) {
+		if (UART_2_STRUCT.RXDMA == true){
+			if (HAL_UART_Receive_DMA(UART_2_STRUCT.uartHandler, UART_2_STRUCT.rxBuffer->buffer, 1)!= HAL_OK) {
 #ifdef DEBUG_TO_CONSOLE
-			printf("uart2 was not enabled\n");
+				printf("uart2 was not enabled\n");
 #endif//DEBUG_TO_CONSOLE
+			}
+		}else{
+			if (HAL_UART_Receive_IT(UART_2_STRUCT.uartHandler, UART_2_STRUCT.rxBuffer->buffer, 1)!= HAL_OK) {
+#ifdef DEBUG_TO_CONSOLE
+				printf("uart2 was not enabled\n");
+#endif//DEBUG_TO_CONSOLE
+			}
 		}
+
 	}else{
 #ifdef DEBUG_TO_CONSOLE
 		printf("uart2 was not enabled\n");
@@ -372,6 +381,12 @@ void UARTSetup(UART_STRUCT* uartS, UART_HandleTypeDef* uartH,RingBuffer_t* rbRX,
 	uartS->ISRBuf = ISRBuf;
 	uartS->RXOverRun = false;
 	uartS->TXOverRun = false;
+#ifdef UART_1_DMA_TX
+	uartS->TXDMA = true;
+#endif
+#ifdef UART_1_DMA_RX
+	uartS->RXDMA = true;
+#endif
 }
 //end setup
 
@@ -382,9 +397,26 @@ int UARTWriteBuffer(UART_STRUCT* uartS, uint8_t* buff, int n) {
 		uartS->TXOverRun = true;
 	}
 	if (DoubleBufferAvailable(uartS->txBuffer) > 0){
-		if (HAL_UART_Transmit_DMA(uartS->uartHandler, uartS->txBuffer->buffer, DoubleBufferAvailable(uartS->txBuffer)) != HAL_BUSY) {
-			DoubleBufferSwap(uartS->txBuffer);
+		if (uartS->TXDMA == true){
+			if (HAL_UART_Transmit_DMA(uartS->uartHandler, uartS->txBuffer->buffer, DoubleBufferAvailable(uartS->txBuffer)) != HAL_BUSY) {
+				DoubleBufferSwap(uartS->txBuffer);
+			}
+		}else{
+			if (HAL_UART_Transmit_IT(uartS->uartHandler, uartS->txBuffer->buffer, DoubleBufferAvailable(uartS->txBuffer)) != HAL_BUSY) {
+				DoubleBufferSwap(uartS->txBuffer);
+			}else{
+				if (uartS->uartHandler->gState == HAL_UART_STATE_READY){
+					uartS->uartHandler->gState = HAL_UART_STATE_BUSY_TX;
+					uartS->uartHandler->pTxBuffPtr = uartS->txBuffer->buffer;
+					uartS->uartHandler->TxXferSize = DoubleBufferAvailable(uartS->txBuffer);
+					uartS->uartHandler->TxXferCount = DoubleBufferAvailable(uartS->txBuffer);
+					uartS->uartHandler->ErrorCode = HAL_UART_ERROR_NONE;
+					SET_BIT(uartS->uartHandler->Instance->CR1, USART_CR1_TXEIE);
+					DoubleBufferSwap(uartS->txBuffer);
+				}
+			}
 		}
+
 	}
 	return n;
 
@@ -394,8 +426,23 @@ void UARTTXCallBackHandler(UART_STRUCT* uartS) {
 		return;
 	}
 	if (DoubleBufferAvailable(uartS->txBuffer) > 0){
-		if (HAL_UART_Transmit_DMA(uartS->uartHandler, uartS->txBuffer->buffer, DoubleBufferAvailable(uartS->txBuffer)) != HAL_BUSY) {
-			DoubleBufferSwap(uartS->txBuffer);
+		if (uartS->TXDMA == true){
+			if (HAL_UART_Transmit_DMA(uartS->uartHandler, uartS->txBuffer->buffer, DoubleBufferAvailable(uartS->txBuffer)) != HAL_BUSY) {
+				DoubleBufferSwap(uartS->txBuffer);
+			}
+		}else{
+			if (DoubleBufferAvailable(uartS->txBuffer) > 0){
+				if (uartS->uartHandler->gState == HAL_UART_STATE_READY){
+					uartS->uartHandler->gState = HAL_UART_STATE_BUSY_TX;
+					uartS->uartHandler->pTxBuffPtr = uartS->txBuffer->buffer;
+					uartS->uartHandler->TxXferSize = DoubleBufferAvailable(uartS->txBuffer);
+					uartS->uartHandler->TxXferCount = DoubleBufferAvailable(uartS->txBuffer);
+					uartS->uartHandler->ErrorCode = HAL_UART_ERROR_NONE;
+					SET_BIT(uartS->uartHandler->Instance->CR1, USART_CR1_TXEIE);
+					DoubleBufferSwap(uartS->txBuffer);
+				}
+
+			}
 		}
 	}
 }
@@ -417,19 +464,34 @@ void UARTRXCallBackHandler(UART_STRUCT* uartS) {
 		uartS->rxBuffer->writeIdx = (uartS->rxBuffer->writeIdx + (1)) % uartS->rxBuffer->size;
 
 	}
-	if (HAL_UART_Receive_DMA(UART_2_STRUCT.uartHandler, UART_2_STRUCT.rxBuffer->buffer + UART_2_STRUCT.rxBuffer->writeIdx, 1) != HAL_OK){
-		if (UART_2_STRUCT.uartHandler->RxState == HAL_UART_STATE_READY) {
-			UART_2_STRUCT.uartHandler->RxState = HAL_UART_STATE_BUSY_RX;
-			UART_2_STRUCT.uartHandler->pRxBuffPtr = &UART_2_STRUCT.rxBuffer->buffer[UART_2_STRUCT.rxBuffer->writeIdx];
-			UART_2_STRUCT.uartHandler->RxXferSize = 1;
-			UART_2_STRUCT.uartHandler->ErrorCode = HAL_UART_ERROR_NONE;
-			uint32_t *tmp = (uint32_t*) &UART_2_STRUCT.uartHandler->pRxBuffPtr;
-			HAL_DMA_Start_IT(UART_2_STRUCT.uartHandler->hdmarx,(uint32_t) &UART_2_STRUCT.uartHandler->Instance->DR, *(uint32_t*) tmp,1);
-			SET_BIT(UART_2_STRUCT.uartHandler->Instance->CR1, USART_CR1_PEIE);
-			SET_BIT(UART_2_STRUCT.uartHandler->Instance->CR3, USART_CR3_EIE);
-			SET_BIT(UART_2_STRUCT.uartHandler->Instance->CR3, USART_CR3_DMAR);
+	if (uartS->RXDMA == true){
+		if (HAL_UART_Receive_DMA(UART_2_STRUCT.uartHandler, UART_2_STRUCT.rxBuffer->buffer + UART_2_STRUCT.rxBuffer->writeIdx, 1) != HAL_OK){
+			if (UART_2_STRUCT.uartHandler->RxState == HAL_UART_STATE_READY) {
+				UART_2_STRUCT.uartHandler->RxState = HAL_UART_STATE_BUSY_RX;
+				UART_2_STRUCT.uartHandler->pRxBuffPtr = &UART_2_STRUCT.rxBuffer->buffer[UART_2_STRUCT.rxBuffer->writeIdx];
+				UART_2_STRUCT.uartHandler->RxXferSize = 1;
+				UART_2_STRUCT.uartHandler->ErrorCode = HAL_UART_ERROR_NONE;
+				uint32_t *tmp = (uint32_t*) &UART_2_STRUCT.uartHandler->pRxBuffPtr;
+				HAL_DMA_Start_IT(UART_2_STRUCT.uartHandler->hdmarx,(uint32_t) &UART_2_STRUCT.uartHandler->Instance->DR, *(uint32_t*) tmp,1);
+				SET_BIT(UART_2_STRUCT.uartHandler->Instance->CR1, USART_CR1_PEIE);
+				SET_BIT(UART_2_STRUCT.uartHandler->Instance->CR3, USART_CR3_EIE);
+				SET_BIT(UART_2_STRUCT.uartHandler->Instance->CR3, USART_CR3_DMAR);
+			}
 		}
+	}else{
+		if (uartS->uartHandler->RxState == HAL_UART_STATE_READY){
+			uartS->uartHandler->RxState = HAL_UART_STATE_BUSY_RX;
+			uartS->uartHandler->pRxBuffPtr = uartS->rxBuffer->buffer + uartS->rxBuffer->writeIdx;
+			uartS->uartHandler->RxXferSize = 1;
+			uartS->uartHandler->RxXferCount = 1;
+			uartS->uartHandler->ErrorCode = HAL_UART_ERROR_NONE;
+			SET_BIT(uartS->uartHandler->Instance->CR1, USART_CR1_PEIE);
+			SET_BIT(uartS->uartHandler->Instance->CR3, USART_CR3_EIE);
+			SET_BIT(uartS->uartHandler->Instance->CR1, USART_CR1_RXNEIE);
+		  }
+		__HAL_UART_FLUSH_DRREGISTER(uartS->uartHandler);
 	}
+
 
 
 }

@@ -31,6 +31,22 @@
  * #define UART_6
  * #define UART_7
  * #define UART_8
+ * #define UART_1_DMA_TX
+ * #define UART_2_DMA_TX
+ * #define UART_3_DMA_TX
+ * #define UART_4_DMA_TX
+ * #define UART_5_DMA_TX
+ * #define UART_6_DMA_TX
+ * #define UART_7_DMA_TX
+ * #define UART_8_DMA_TX
+ * #define UART_1_DMA_RX
+ * #define UART_2_DMA_RX
+ * #define UART_3_DMA_RX
+ * #define UART_4_DMA_RX
+ * #define UART_5_DMA_RX
+ * #define UART_6_DMA_RX
+ * #define UART_7_DMA_RX
+ * #define UART_8_DMA_RX
  * #include "stm32f0xx_hal.h"
  * #include "stm32f3xx_hal.h"
  * #include "stm32f4xx_hal.h"
@@ -54,6 +70,8 @@
 #include "stm32f4xx_hal_dma.h"
 //#define UART_1
 #define UART_2
+#define UART_1_DMA_TX
+#define UART_1_DMA_RX
 //#define UART_6
 
 
@@ -87,6 +105,8 @@ typedef struct {
 	uint8_t* ISRBuf;
 	bool RXOverRun;
 	bool TXOverRun;
+	bool TXDMA;
+	bool RXDMA;
 } UART_STRUCT;
 
 
