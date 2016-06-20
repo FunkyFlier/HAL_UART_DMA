@@ -45,6 +45,9 @@ DMA_HandleTypeDef hdma_usart2_tx;
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
 #define DEBUG_TO_CONSOLE
+uint8_t HWMessage1[] = "DMA Hello world\r\n";
+uint8_t HWMessage2[] = "test message 2\r\n";
+uint8_t HWMessage3[] = "test message 3\r\n";
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -90,6 +93,10 @@ int main(void)
 	initialise_monitor_handles();
 	printf("start\n");
 #endif
+	UARTInit();
+	UARTWriteBuffer(&UART_2_STRUCT, HWMessage1, sizeof(HWMessage1) - 1);
+	UARTWriteBuffer(&UART_2_STRUCT, HWMessage2, sizeof(HWMessage2) - 1);
+	UARTWriteBuffer(&UART_2_STRUCT, HWMessage3, sizeof(HWMessage3) - 1);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -99,7 +106,7 @@ int main(void)
   /* USER CODE END WHILE */
 
   /* USER CODE BEGIN 3 */
-
+	  UARTLoopDemo();
   }
   /* USER CODE END 3 */
 

@@ -36,7 +36,7 @@
 #include "stm32f4xx_it.h"
 
 /* USER CODE BEGIN 0 */
-
+#include <UART.h>
 /* USER CODE END 0 */
 
 /* External variables --------------------------------------------------------*/
@@ -80,7 +80,19 @@ void DMA1_Stream5_IRQHandler(void)
   /* USER CODE END DMA1_Stream5_IRQn 0 */
   HAL_DMA_IRQHandler(&hdma_usart2_rx);
   /* USER CODE BEGIN DMA1_Stream5_IRQn 1 */
-
+  if (HAL_UART_Receive_DMA(UART_2_STRUCT.uartHandler, UART_2_STRUCT.rxBuffer->buffer + UART_2_STRUCT.rxBuffer->writeIdx, 1) != HAL_OK){
+		if (UART_2_STRUCT.uartHandler->RxState == HAL_UART_STATE_READY) {
+			UART_2_STRUCT.uartHandler->RxState = HAL_UART_STATE_BUSY_RX;
+			UART_2_STRUCT.uartHandler->pRxBuffPtr = &UART_2_STRUCT.rxBuffer->buffer[UART_2_STRUCT.rxBuffer->writeIdx];
+			UART_2_STRUCT.uartHandler->RxXferSize = 1;
+			UART_2_STRUCT.uartHandler->ErrorCode = HAL_UART_ERROR_NONE;
+			uint32_t *tmp = (uint32_t*) &UART_2_STRUCT.uartHandler->pRxBuffPtr;
+			HAL_DMA_Start_IT(UART_2_STRUCT.uartHandler->hdmarx,(uint32_t) &UART_2_STRUCT.uartHandler->Instance->DR, *(uint32_t*) tmp,1);
+			SET_BIT(UART_2_STRUCT.uartHandler->Instance->CR1, USART_CR1_PEIE);
+			SET_BIT(UART_2_STRUCT.uartHandler->Instance->CR3, USART_CR3_EIE);
+			SET_BIT(UART_2_STRUCT.uartHandler->Instance->CR3, USART_CR3_DMAR);
+		}
+	}
   /* USER CODE END DMA1_Stream5_IRQn 1 */
 }
 

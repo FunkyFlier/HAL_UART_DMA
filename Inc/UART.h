@@ -51,12 +51,13 @@
 
 //user defines----------------------
 #include "stm32f4xx_hal.h"
+#include "stm32f4xx_hal_dma.h"
 //#define UART_1
 #define UART_2
 //#define UART_6
 
 
-//#define LOOP_BACK_DEMO
+#define LOOP_BACK_DEMO
 
 #define UART_RING_BUF_SIZE_RX 128
 #define UART_RING_BUF_SIZE_TX 128

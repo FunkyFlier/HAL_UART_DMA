@@ -8,6 +8,7 @@
 
 #include <UART.h>
 
+#include "stm32f4xx_hal_uart.h"
 void UARTSetup(UART_STRUCT*, UART_HandleTypeDef*, RingBuffer_t*,DoubleBuffer_t*, uint8_t*);
 
 void UARTTXCallBackHandler(UART_STRUCT*);
@@ -15,7 +16,6 @@ void UARTRXCallBackHandler(UART_STRUCT*);
 void DoubleBufferCreate(DoubleBuffer_t *, uint8_t *, uint8_t *,int );
 int DoubleBufferWrite(DoubleBuffer_t *, uint8_t *, int );
 void DoubleBufferSwap(DoubleBuffer_t *);
-int RingBufferWriteByte(RingBuffer_t *, uint8_t *);
 
 #ifdef LOOP_BACK_DEMO
 uint8_t testMessage0[] = "****************************\r\n";
@@ -73,7 +73,7 @@ void UARTInit() {
 		RingBufferCreate(&UART_2_RX_RING, UART_2_RX_BUFFER,(int) UART_RING_BUF_SIZE_RX);
 		DoubleBufferCreate(&UART_2_TX_DB, UART_2_TX_BUFFER1,UART_2_TX_BUFFER2,(int) UART_RING_BUF_SIZE_TX);
 		UARTSetup(&UART_2_STRUCT, &huart2, &UART_2_RX_RING, &UART_2_TX_DB,ISRBuffer_2);
-		if (HAL_UART_Receive_IT(UART_2_STRUCT.uartHandler, UART_2_STRUCT.ISRBuf, 1)!= HAL_OK) {
+		if (HAL_UART_Receive_DMA(UART_2_STRUCT.uartHandler, UART_2_STRUCT.rxBuffer->buffer, 1)!= HAL_OK) {
 #ifdef DEBUG_TO_CONSOLE
 			printf("uart2 was not enabled\n");
 #endif//DEBUG_TO_CONSOLE
@@ -382,7 +382,7 @@ int UARTWriteBuffer(UART_STRUCT* uartS, uint8_t* buff, int n) {
 		uartS->TXOverRun = true;
 	}
 	if (DoubleBufferAvailable(uartS->txBuffer) > 0){
-		if (HAL_UART_Transmit_IT(uartS->uartHandler, uartS->txBuffer->buffer, DoubleBufferAvailable(uartS->txBuffer)) != HAL_BUSY) {
+		if (HAL_UART_Transmit_DMA(uartS->uartHandler, uartS->txBuffer->buffer, DoubleBufferAvailable(uartS->txBuffer)) != HAL_BUSY) {
 			DoubleBufferSwap(uartS->txBuffer);
 		}
 	}
@@ -394,7 +394,7 @@ void UARTTXCallBackHandler(UART_STRUCT* uartS) {
 		return;
 	}
 	if (DoubleBufferAvailable(uartS->txBuffer) > 0){
-		if (HAL_UART_Transmit_IT(uartS->uartHandler, uartS->txBuffer->buffer, DoubleBufferAvailable(uartS->txBuffer)) != HAL_BUSY) {
+		if (HAL_UART_Transmit_DMA(uartS->uartHandler, uartS->txBuffer->buffer, DoubleBufferAvailable(uartS->txBuffer)) != HAL_BUSY) {
 			DoubleBufferSwap(uartS->txBuffer);
 		}
 	}
@@ -408,22 +408,30 @@ int UARTGetBuffer(UART_STRUCT* uartS, uint8_t* buff, int n) {
 }
 
 void UARTRXCallBackHandler(UART_STRUCT* uartS) {
-	if (RingBufferWriteByte(uartS->rxBuffer, uartS->ISRBuf) == -1){
+	//faster than copying the same byte to the ring buffer every time?
+	uartS->rxBuffer->readIdxTemp = uartS->rxBuffer->readIdx;
+
+	if (uartS->rxBuffer->readIdxTemp == ((uartS->rxBuffer->writeIdx + 1) % uartS->rxBuffer->size)){
 		uartS->RXOverRun = true;
+	}else{
+		uartS->rxBuffer->writeIdx = (uartS->rxBuffer->writeIdx + (1)) % uartS->rxBuffer->size;
+
 	}
-	__HAL_UART_FLUSH_DRREGISTER(uartS->uartHandler);
-	if (HAL_UART_Receive_IT(uartS->uartHandler, uartS->ISRBuf, 1) != HAL_OK) {
-		if (uartS->uartHandler->RxState == HAL_UART_STATE_READY){
-			uartS->uartHandler->RxState = HAL_UART_STATE_BUSY_RX;
-			uartS->uartHandler->pRxBuffPtr = uartS->ISRBuf;
-			uartS->uartHandler->RxXferSize = 1;
-			uartS->uartHandler->RxXferCount = 1;
-			uartS->uartHandler->ErrorCode = HAL_UART_ERROR_NONE;
-			SET_BIT(uartS->uartHandler->Instance->CR1, USART_CR1_PEIE);
-			SET_BIT(uartS->uartHandler->Instance->CR3, USART_CR3_EIE);
-			SET_BIT(uartS->uartHandler->Instance->CR1, USART_CR1_RXNEIE);
-		  }
+	if (HAL_UART_Receive_DMA(UART_2_STRUCT.uartHandler, UART_2_STRUCT.rxBuffer->buffer + UART_2_STRUCT.rxBuffer->writeIdx, 1) != HAL_OK){
+		if (UART_2_STRUCT.uartHandler->RxState == HAL_UART_STATE_READY) {
+			UART_2_STRUCT.uartHandler->RxState = HAL_UART_STATE_BUSY_RX;
+			UART_2_STRUCT.uartHandler->pRxBuffPtr = &UART_2_STRUCT.rxBuffer->buffer[UART_2_STRUCT.rxBuffer->writeIdx];
+			UART_2_STRUCT.uartHandler->RxXferSize = 1;
+			UART_2_STRUCT.uartHandler->ErrorCode = HAL_UART_ERROR_NONE;
+			uint32_t *tmp = (uint32_t*) &UART_2_STRUCT.uartHandler->pRxBuffPtr;
+			HAL_DMA_Start_IT(UART_2_STRUCT.uartHandler->hdmarx,(uint32_t) &UART_2_STRUCT.uartHandler->Instance->DR, *(uint32_t*) tmp,1);
+			SET_BIT(UART_2_STRUCT.uartHandler->Instance->CR1, USART_CR1_PEIE);
+			SET_BIT(UART_2_STRUCT.uartHandler->Instance->CR3, USART_CR3_EIE);
+			SET_BIT(UART_2_STRUCT.uartHandler->Instance->CR3, USART_CR3_DMAR);
+		}
 	}
+
+
 }
 
 //ISR callbacks
@@ -612,16 +620,7 @@ void RingBufferCreate(RingBuffer_t *rb, uint8_t *buffer, int sizeOfBuffer) {
 	rb->writeIdx = 0;
 }
 
-//the write functions should be used in the RX ISR call back
-int RingBufferWriteByte(RingBuffer_t *rb, uint8_t *in) {
-	rb->readIdxTemp = rb->readIdx;
-	if (rb->readIdxTemp == ((rb->writeIdx + 1) % rb->size)){
-		return -1;
-	}
-	rb->buffer[rb->writeIdx] = in[0];
-	rb->writeIdx = (rb->writeIdx + (1)) % rb->size;
-	return 1;
-}
+
 int RingBufferWrite(RingBuffer_t *rb, uint8_t *in, int count) {
 	rb->readIdxTemp = rb->readIdx;
 	rb->availableWrite = rb->writeIdx - rb->readIdxTemp;
