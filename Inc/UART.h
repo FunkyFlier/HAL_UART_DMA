@@ -107,6 +107,7 @@ typedef struct {
 	bool TXOverRun;
 	bool TXDMA;
 	bool RXDMA;
+	volatile bool transmitting;
 } UART_STRUCT;
 
 
