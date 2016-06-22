@@ -39,7 +39,6 @@
 
 /* Private variables ---------------------------------------------------------*/
 UART_HandleTypeDef huart2;
-DMA_HandleTypeDef hdma_usart2_rx;
 DMA_HandleTypeDef hdma_usart2_tx;
 
 /* USER CODE BEGIN PV */
@@ -66,8 +65,6 @@ static void MX_USART2_UART_Init(void);
 #ifdef DEBUG_TO_CONSOLE
 extern void initialise_monitor_handles(void);
 #endif
-//int bufFullCount,
-bool messageSend = false;
 /* USER CODE END 0 */
 
 int main(void)
@@ -91,61 +88,25 @@ int main(void)
   MX_USART2_UART_Init();
 
   /* USER CODE BEGIN 2 */
-	/*HAL_GPIO_WritePin(LD6_GPIO_Port,LD6_Pin,GPIO_PIN_SET);
-	HAL_Delay(10);
-	HAL_GPIO_WritePin(LD6_GPIO_Port,LD6_Pin,GPIO_PIN_RESET);
-	HAL_Delay(10);
-	HAL_GPIO_WritePin(LD5_GPIO_Port,LD5_Pin,GPIO_PIN_SET);
-	HAL_Delay(10);
-	HAL_GPIO_WritePin(LD5_GPIO_Port,LD5_Pin,GPIO_PIN_RESET);
-	HAL_Delay(10);
-	HAL_GPIO_WritePin(LD4_GPIO_Port,LD4_Pin,GPIO_PIN_SET);
-	HAL_Delay(10);
-	HAL_GPIO_WritePin(LD4_GPIO_Port,LD4_Pin,GPIO_PIN_RESET);
-	HAL_Delay(10);
-	HAL_GPIO_WritePin(LD3_GPIO_Port,LD3_Pin,GPIO_PIN_SET);
-	HAL_Delay(10);
-	HAL_GPIO_WritePin(LD3_GPIO_Port,LD3_Pin,GPIO_PIN_RESET);
-	HAL_Delay(10);*/
+
 #ifdef DEBUG_TO_CONSOLE
 	initialise_monitor_handles();
 	printf("start\n");
 #endif
 	UARTInit();
-	//UARTWriteBuffer(&UART_2_STRUCT, HWMessage1, sizeof(HWMessage1) - 1);
-	//UARTWriteBuffer(&UART_2_STRUCT, HWMessage2, sizeof(HWMessage2) - 1);
-	//UARTWriteBuffer(&UART_2_STRUCT, HWMessage3, sizeof(HWMessage3) - 1);
-  /* USER CODE END 2 */
+	UARTWriteBuffer(&UART_2_STRUCT, HWMessage1, sizeof(HWMessage1) - 1);
+	UARTWriteBuffer(&UART_2_STRUCT, HWMessage2, sizeof(HWMessage2) - 1);
+	UARTWriteBuffer(&UART_2_STRUCT, HWMessage3, sizeof(HWMessage3) - 1);
 
-  /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-	  /*HAL_GPIO_WritePin(GPIOD,GPIO_PIN_10,GPIO_PIN_SET);
 
-
-	  if (HAL_GPIO_ReadPin(B1_GPIO_Port,B1_Pin) == GPIO_PIN_SET){
-		  messageSend ^= true;
-		  HAL_Delay(100);
-	  }
-	  if (messageSend == true){
-		  UARTWriteBuffer(&UART_2_STRUCT, HWMessage3, sizeof(HWMessage3) - 1);
-		  UARTWriteBuffer(&UART_2_STRUCT, HWMessage3, sizeof(HWMessage3) - 1);
-		  //HAL_Delay(10);
-	  }
-	  HAL_GPIO_WritePin(GPIOD,GPIO_PIN_10,GPIO_PIN_RESET);
-	  //HAL_Delay(1);*/
 
   /* USER CODE END WHILE */
 
   /* USER CODE BEGIN 3 */
-	  /*if (HAL_GPIO_ReadPin(B1_GPIO_Port,B1_Pin) == GPIO_PIN_SET){
-		  printf("debounce\n");
-		  //HAL_GPIO_TogglePin(LD4_GPIO_Port,LD4_Pin);
-		  UARTWriteBuffer(&UART_2_STRUCT, HWMessage2, 1);
-		  //printf("tx ISR cnt: %i\n",txCount);
-		  txCount = 0;
-	  }*/
+
 	  UARTLoopDemo();
   }
   /* USER CODE END 3 */
@@ -224,9 +185,6 @@ static void MX_DMA_Init(void)
   __HAL_RCC_DMA1_CLK_ENABLE();
 
   /* DMA interrupt init */
-  /* DMA1_Stream5_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(DMA1_Stream5_IRQn, 0, 0);
-  HAL_NVIC_EnableIRQ(DMA1_Stream5_IRQn);
   /* DMA1_Stream6_IRQn interrupt configuration */
   HAL_NVIC_SetPriority(DMA1_Stream6_IRQn, 0, 0);
   HAL_NVIC_EnableIRQ(DMA1_Stream6_IRQn);
@@ -331,10 +289,19 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Alternate = GPIO_AF5_SPI2;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : PD10 DBG1_Pin LD4_Pin LD3_Pin 
-                           LD5_Pin LD6_Pin Audio_RST_Pin */
-  GPIO_InitStruct.Pin = GPIO_PIN_10|DBG1_Pin|LD4_Pin|LD3_Pin 
-                          |LD5_Pin|LD6_Pin|Audio_RST_Pin;
+  /*Configure GPIO pin : PB15 */
+  GPIO_InitStruct.Pin = GPIO_PIN_15;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : PD8 PD9 PD10 DBG1_Pin 
+                           LD4_Pin LD3_Pin LD5_Pin LD6_Pin 
+                           Audio_RST_Pin */
+  GPIO_InitStruct.Pin = GPIO_PIN_8|GPIO_PIN_9|GPIO_PIN_10|DBG1_Pin 
+                          |LD4_Pin|LD3_Pin|LD5_Pin|LD6_Pin 
+                          |Audio_RST_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
@@ -383,8 +350,12 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_WritePin(OTG_FS_PowerSwitchOn_GPIO_Port, OTG_FS_PowerSwitchOn_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOD, GPIO_PIN_10|DBG1_Pin|LD4_Pin|LD3_Pin 
-                          |LD5_Pin|LD6_Pin|Audio_RST_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_15, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOD, GPIO_PIN_8|GPIO_PIN_9|GPIO_PIN_10|DBG1_Pin 
+                          |LD4_Pin|LD3_Pin|LD5_Pin|LD6_Pin 
+                          |Audio_RST_Pin, GPIO_PIN_RESET);
 
 }
 
