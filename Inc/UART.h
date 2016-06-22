@@ -2,7 +2,8 @@
  * UART.h
  *
  *  Created on: Jun 6, 2016
- *      Author: work
+ *      Author: Michael Baker
+ *      Email: mikesbaker@gmail.com
  *
  * Cube code must have UART_HandleTypeDef having gState and RxState instead of just State
  * Tested working on:
@@ -22,6 +23,10 @@
  * 1 - Select defines
  * 2 - Call UARTInit() in user code 2 of main loop
  * 3 - Call UARTLoopDemo() in while(1){} if using loop back demonstration
+ *
+ * Note: DMA and UART IRQ should be same priority
+ * For TX DMA use Normal mode increment memory address
+ * For RX DMA use Circular and it increment memory address
  *
  * #define UART_1
  * #define UART_2
@@ -69,24 +74,22 @@
 #include "stm32f4xx_hal.h"
 #include "stm32f4xx_hal_dma.h"
 
- #define UART_1
- #define UART_2
- #define UART_3
- #define UART_4
- #define UART_5
- #define UART_6
- #define UART_7
- #define UART_8
-/*
+#define UART_1
+#define UART_1_DMA_TX
+#define UART_1_DMA_RX
 #define UART_2
-//#define UART_2_DMA_TX
-//#define UART_2_DMA_RX
-*/
+#define UART_2_DMA_TX
+#define UART_2_DMA_RX
+#define UART_6
+#define UART_6_DMA_TX
+#define UART_6_DMA_RX
 
 #define LOOP_BACK_DEMO
 
 #define UART_RING_BUF_SIZE_RX 128
 #define UART_RING_BUF_SIZE_TX 128
+
+
 //user defines----------------------
 
 typedef struct{
@@ -120,16 +123,16 @@ typedef struct {
 
 
 void UARTInit();
-
 int UARTWriteBuffer(UART_STRUCT*, uint8_t*, int);
-int UARTGetBuffer(UART_STRUCT*, uint8_t*, int);
 int UARTAvailabe(UART_STRUCT*);
+int UARTGetBuffer(UART_STRUCT*, uint8_t*, int);
 void UARTLoopDemo();
 
+int RingBufferAvailable(RingBuffer_t *);
 void RingBufferCreate(RingBuffer_t *, uint8_t *, int );
 int RingBufferWrite(RingBuffer_t *, uint8_t *, int );
 int RingBufferRead(RingBuffer_t *, uint8_t *, int );
-int RingBufferAvailable(RingBuffer_t *);
+
 
 #define DoubleBufferFree(T) ((T)->size - (T)->writeIdx)
 #define DoubleBufferAvailable(T) ((T)->writeIdx)
@@ -141,10 +144,7 @@ int RingBufferAvailable(RingBuffer_t *);
 #define RingBufferCommitRead(B, A) ((B)->readIdx = ((B)->readIdx + (A)) % (B)->size)
 #define RingBufferCommitWrite(B, A) ((B)->writeIdx = ((B)->writeIdx + (A)) % (B)->size)
 
-#ifdef LOOP_BACK_DEMO
-uint8_t loopBackBuffer[UART_RING_BUF_SIZE_RX];
-int numBytes;
-#endif
+
 
 #ifdef UART_1
 UART_STRUCT UART_1_STRUCT;

@@ -3,12 +3,10 @@
  *
  *  Created on: Jun 6, 2016
  *      Author: Michael Baker
- *      Works up to 230400 for loop back
+ *      Email: mikesbaker@gmail.com
  */
-
 #include <UART.h>
-
-#include "stm32f4xx_hal_uart.h"
+//PFP
 void UARTSetup(UART_STRUCT*, UART_HandleTypeDef*, RingBuffer_t*,DoubleBuffer_t*, uint8_t*);
 void UARTTXCallBackHandler(UART_STRUCT*);
 void UARTRXCallBackHandler(UART_STRUCT*);
@@ -17,7 +15,12 @@ int DoubleBufferWrite(DoubleBuffer_t *, uint8_t *, int );
 void DoubleBufferSwap(DoubleBuffer_t *);
 int RingBufferWriteByte(RingBuffer_t*, uint8_t*);
 
+//END PFP-------------------------------------------------------
+//PV
+
 #ifdef LOOP_BACK_DEMO
+uint8_t loopBackBuffer[UART_RING_BUF_SIZE_RX];
+int numBytes;
 uint8_t testMessage0[] = "****************************\r\n";
 #ifdef UART_1
 uint8_t testMessage1[] = "UART1 loop back demonstration\r\n";
@@ -45,6 +48,23 @@ uint8_t testMessage8[] = "UART8 loop back demonstration\r\n";
 #endif
 #endif
 
+
+
+//END PV-------------------------------------------------------
+
+
+
+//uart
+//init
+void UARTSetup(UART_STRUCT* uartS, UART_HandleTypeDef* uartH,RingBuffer_t* rbRX, DoubleBuffer_t* dbTX,uint8_t* ISRBuf) {
+	uartS->uartHandler = uartH;
+	uartS->rxBuffer = rbRX;
+	uartS->txBuffer = dbTX;
+	uartS->ISRBuf = ISRBuf;
+	uartS->RXOverRun = false;
+	uartS->TXOverRun = false;
+
+}
 void UARTInit() {
 #ifdef UART_1
 	if (HAL_UART_GetState(&huart1) != HAL_UART_STATE_RESET){
@@ -279,159 +299,7 @@ void UARTInit() {
 
 #endif//UART_8
 }
-
-#ifdef LOOP_BACK_DEMO
-void UARTLoopDemo(){
-
-#ifdef UART_1
-	if (UARTAvailabe(&UART_1_STRUCT) > 0){
-		numBytes = UARTGetBuffer(&UART_1_STRUCT,loopBackBuffer,UARTAvailabe(&UART_1_STRUCT));
-		if (numBytes != -1){
-			RingBufferWrite(&loopBackUART1,loopBackBuffer,numBytes);
-		}
-	}
-	if (RingBufferAvailable(&loopBackUART1) > 0 ){
-		numBytes = RingBufferRead(&loopBackUART1,loopBackBuffer,RingBufferAvailable(&loopBackUART1));
-		if (numBytes != -1){
-			UARTWriteBuffer(&UART_1_STRUCT,loopBackBuffer,numBytes);
-		}
-
-	}
-#endif
-#ifdef UART_2
-	if (UARTAvailabe(&UART_2_STRUCT) > 0){
-		numBytes = UARTGetBuffer(&UART_2_STRUCT,loopBackBuffer,UARTAvailabe(&UART_2_STRUCT));
-		if (numBytes != -1){
-			RingBufferWrite(&loopBackUART2,loopBackBuffer,numBytes);
-		}
-	}
-	if (RingBufferAvailable(&loopBackUART2) > 0 ){
-		numBytes = RingBufferRead(&loopBackUART2,loopBackBuffer,RingBufferAvailable(&loopBackUART2));
-		if (numBytes != -1){
-			UARTWriteBuffer(&UART_2_STRUCT,loopBackBuffer,numBytes);
-		}
-
-	}
-#endif
-#ifdef UART_3
-	if (UARTAvailabe(&UART_3_STRUCT) > 0){
-		numBytes = UARTGetBuffer(&UART_3_STRUCT,loopBackBuffer,UARTAvailabe(&UART_3_STRUCT));
-		if (numBytes != -1){
-			RingBufferWrite(&loopBackUART3,loopBackBuffer,numBytes);
-		}
-	}
-	if (RingBufferAvailable(&loopBackUART3) > 0 ){
-		numBytes = RingBufferRead(&loopBackUART3,loopBackBuffer,RingBufferAvailable(&loopBackUART3));
-		if (numBytes != -1){
-			UARTWriteBuffer(&UART_3_STRUCT,loopBackBuffer,numBytes);
-		}
-
-	}
-#endif
-#ifdef UART_4
-	if (UARTAvailabe(&UART_4_STRUCT) > 0){
-		numBytes = UARTGetBuffer(&UART_4_STRUCT,loopBackBuffer,UARTAvailabe(&UART_4_STRUCT));
-		if (numBytes != -1){
-			RingBufferWrite(&loopBackUART4,loopBackBuffer,numBytes);
-		}
-	}
-	if (RingBufferAvailable(&loopBackUART4) > 0 ){
-		numBytes = RingBufferRead(&loopBackUART4,loopBackBuffer,RingBufferAvailable(&loopBackUART4));
-		if (numBytes != -1){
-			UARTWriteBuffer(&UART_4_STRUCT,loopBackBuffer,numBytes);
-		}
-
-	}
-#endif
-#ifdef UART_5
-	if (UARTAvailabe(&UART_5_STRUCT) > 0){
-		numBytes = UARTGetBuffer(&UART_5_STRUCT,loopBackBuffer,UARTAvailabe(&UART_5_STRUCT));
-		if (numBytes != -1){
-			RingBufferWrite(&loopBackUART5,loopBackBuffer,numBytes);
-		}
-	}
-	if (RingBufferAvailable(&loopBackUART5) > 0 ){
-		numBytes = RingBufferRead(&loopBackUART5,loopBackBuffer,RingBufferAvailable(&loopBackUART5));
-		if (numBytes != -1){
-			UARTWriteBuffer(&UART_5_STRUCT,loopBackBuffer,numBytes);
-		}
-
-	}
-#endif
-#ifdef UART_6
-	if (UARTAvailabe(&UART_6_STRUCT) > 0){
-		numBytes = UARTGetBuffer(&UART_6_STRUCT,loopBackBuffer,UARTAvailabe(&UART_6_STRUCT));
-		if (numBytes != -1){
-			RingBufferWrite(&loopBackUART6,loopBackBuffer,numBytes);
-		}
-	}
-	if (RingBufferAvailable(&loopBackUART6) > 0 ){
-		numBytes = RingBufferRead(&loopBackUART6,loopBackBuffer,RingBufferAvailable(&loopBackUART6));
-		if (numBytes != -1){
-			UARTWriteBuffer(&UART_6_STRUCT,loopBackBuffer,numBytes);
-		}
-
-	}
-#endif
-#ifdef UART_6
-	if (UARTAvailabe(&UART_6_STRUCT) > 0){
-		numBytes = UARTGetBuffer(&UART_6_STRUCT,loopBackBuffer,UARTAvailabe(&UART_6_STRUCT));
-		if (numBytes != -1){
-			RingBufferWrite(&loopBackUART6,loopBackBuffer,numBytes);
-		}
-	}
-	if (RingBufferAvailable(&loopBackUART6) > 0 ){
-		numBytes = RingBufferRead(&loopBackUART6,loopBackBuffer,RingBufferAvailable(&loopBackUART6));
-		if (numBytes != -1){
-			UARTWriteBuffer(&UART_6_STRUCT,loopBackBuffer,numBytes);
-		}
-
-	}
-#endif
-#ifdef UART_7
-	if (UARTAvailabe(&UART_7_STRUCT) > 0){
-		numBytes = UARTGetBuffer(&UART_7_STRUCT,loopBackBuffer,UARTAvailabe(&UART_7_STRUCT));
-		if (numBytes != -1){
-			RingBufferWrite(&loopBackUART7,loopBackBuffer,numBytes);
-		}
-	}
-	if (RingBufferAvailable(&loopBackUART7) > 0 ){
-		numBytes = RingBufferRead(&loopBackUART7,loopBackBuffer,RingBufferAvailable(&loopBackUART7));
-		if (numBytes != -1){
-			UARTWriteBuffer(&UART_7_STRUCT,loopBackBuffer,numBytes);
-		}
-
-	}
-#endif
-#ifdef UART_8
-	if (UARTAvailabe(&UART_8_STRUCT) > 0){
-		numBytes = UARTGetBuffer(&UART_8_STRUCT,loopBackBuffer,UARTAvailabe(&UART_8_STRUCT));
-		if (numBytes != -1){
-			RingBufferWrite(&loopBackUART8,loopBackBuffer,numBytes);
-		}
-	}
-	if (RingBufferAvailable(&loopBackUART8) > 0 ){
-		numBytes = RingBufferRead(&loopBackUART8,loopBackBuffer,RingBufferAvailable(&loopBackUART8));
-		if (numBytes != -1){
-			UARTWriteBuffer(&UART_8_STRUCT,loopBackBuffer,numBytes);
-		}
-
-	}
-#endif
-}
-#endif
-//setup
-void UARTSetup(UART_STRUCT* uartS, UART_HandleTypeDef* uartH,RingBuffer_t* rbRX, DoubleBuffer_t* dbTX,uint8_t* ISRBuf) {
-	uartS->uartHandler = uartH;
-	uartS->rxBuffer = rbRX;
-	uartS->txBuffer = dbTX;
-	uartS->ISRBuf = ISRBuf;
-	uartS->RXOverRun = false;
-	uartS->TXOverRun = false;
-
-}
-
-
+//general
 int UARTWriteBuffer(UART_STRUCT* uartS, uint8_t* buff, int n) {
 	if (n < DoubleBufferWrite(uartS->txBuffer, buff, n)){
 		uartS->TXOverRun = true;
@@ -451,6 +319,16 @@ int UARTWriteBuffer(UART_STRUCT* uartS, uint8_t* buff, int n) {
 	return n;
 
 }
+
+int UARTAvailabe(UART_STRUCT* uartS) {
+	return RingBufferAvailable(uartS->rxBuffer);
+}
+
+int UARTGetBuffer(UART_STRUCT* uartS, uint8_t* buff, int n) {
+	return RingBufferRead(uartS->rxBuffer,buff,n);
+}
+
+//call backs
 void UARTTXCallBackHandler(UART_STRUCT* uartS) {
 	if (uartS->txBuffer->writing == true) {
 		return;
@@ -466,22 +344,6 @@ void UARTTXCallBackHandler(UART_STRUCT* uartS) {
 			}
 		}
 	}
-}
-int UARTAvailabe(UART_STRUCT* uartS) {
-	return RingBufferAvailable(uartS->rxBuffer);
-}
-
-int UARTGetBuffer(UART_STRUCT* uartS, uint8_t* buff, int n) {
-	return RingBufferRead(uartS->rxBuffer,buff,n);
-}
-int RingBufferWriteByte(RingBuffer_t *rb, uint8_t *in) {
-	rb->readIdxTemp = rb->readIdx;
-	if (rb->readIdxTemp == ((rb->writeIdx + 1) % rb->size)){
-		return -1;
-	}
-	rb->buffer[rb->writeIdx] = in[0];
-	rb->writeIdx = (rb->writeIdx + (1)) % rb->size;
-	return 1;
 }
 void UARTRXCallBackHandler(UART_STRUCT* uartS) {
 
@@ -513,7 +375,70 @@ void UARTRXCallBackHandler(UART_STRUCT* uartS) {
 
 
 }
+//TX
+void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart) {
 
+	switch ((uint32_t) huart->Instance) {
+#ifdef USART1
+	case (uint32_t) USART1:
+#ifdef UART_1
+		UARTTXCallBackHandler(&UART_1_STRUCT);
+#endif//UART_1
+		break;
+#endif//USART1
+#ifdef USART2
+	case (uint32_t) USART2:
+#ifdef UART_2
+		UARTTXCallBackHandler(&UART_2_STRUCT);
+#endif//UART_2
+		break;
+#endif//USART2
+#ifdef USART3
+		case (uint32_t)USART3:
+#ifdef UART_3
+		UARTTXCallBackHandler(&UART_3_STRUCT);
+#endif//UART_3
+		break;
+#endif//USART3
+#ifdef USART4
+		case (uint32_t)USART4:
+#ifdef UART_4
+		UARTTXCallBackHandler(&UART_4_STRUCT);
+#endif//UART_4
+		break;
+#endif//USART4
+#ifdef USART5
+		case (uint32_t)USART5:
+#ifdef UART_5
+		UARTTXCallBackHandler(&UART_5_STRUCT);
+#endif//UART_5
+		break;
+#endif//USART5
+#ifdef USART6
+	case (uint32_t) USART6:
+#ifdef UART_6
+		UARTTXCallBackHandler(&UART_6_STRUCT);
+#endif//UART_6
+		break;
+#endif//USART6
+#ifdef USART7
+		case (uint32_t)USART7:
+#ifdef UART_7
+		UARTTXCallBackHandler(&UART_7_STRUCT);
+#endif//UART_7
+		break;
+#endif//USART7
+#ifdef USART8
+		case (uint32_t)USART8:
+#ifdef UART_8
+		UARTTXCallBackHandler(&UART_8_STRUCT);
+#endif//UART_8
+		break;
+#endif//USART8
+	}
+}
+
+//RX
 //ISR callbacks
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
 	//this function puts the received byte into the correct ring buffer
@@ -577,76 +502,197 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
 	}
 
 }
-
-void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart) {
-
-	switch ((uint32_t) huart->Instance) {
-#ifdef USART1
-	case (uint32_t) USART1:
+//end call back
+//loop back demo
+#ifdef LOOP_BACK_DEMO
+void UARTLoopDemo(){
+	int bytesOut;
 #ifdef UART_1
-		UARTTXCallBackHandler(&UART_1_STRUCT);
-#endif//UART_1
-		break;
-#endif//USART1
-#ifdef USART2
-	case (uint32_t) USART2:
-#ifdef UART_2
-		UARTTXCallBackHandler(&UART_2_STRUCT);
-#endif//UART_2
-		break;
-#endif//USART2
-#ifdef USART3
-		case (uint32_t)USART3:
-#ifdef UART_3
-		UARTTXCallBackHandler(&UART_3_STRUCT);
-#endif//UART_3
-		break;
-#endif//USART3
-#ifdef USART4
-		case (uint32_t)USART4:
-#ifdef UART_4
-		UARTTXCallBackHandler(&UART_4_STRUCT);
-#endif//UART_4
-		break;
-#endif//USART4
-#ifdef USART5
-		case (uint32_t)USART5:
-#ifdef UART_5
-		UARTTXCallBackHandler(&UART_5_STRUCT);
-#endif//UART_5
-		break;
-#endif//USART5
-#ifdef USART6
-	case (uint32_t) USART6:
-#ifdef UART_6
-		UARTTXCallBackHandler(&UART_6_STRUCT);
-#endif//UART_6
-		break;
-#endif//USART6
-#ifdef USART7
-		case (uint32_t)USART7:
-#ifdef UART_7
-		UARTTXCallBackHandler(&UART_7_STRUCT);
-#endif//UART_7
-		break;
-#endif//USART7
-#ifdef USART8
-		case (uint32_t)USART8:
-#ifdef UART_8
-		UARTTXCallBackHandler(&UART_8_STRUCT);
-#endif//UART_8
-		break;
-#endif//USART8
-	}
-}
+	static uint32_t uart1Timer;
 
-void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart) {
-#ifdef DEBUG_TO_CONSOLE
-	//printf("uart error: %lu\n", huart->ErrorCode);
-	printf("u E: %i\nu S: %i\n", (int) HAL_UART_GetError(huart),
-			(int) HAL_UART_GetState(huart));
+	if (UARTAvailabe(&UART_1_STRUCT) > 0){
+		numBytes = UARTGetBuffer(&UART_1_STRUCT,loopBackBuffer,UARTAvailabe(&UART_1_STRUCT));
+		if (numBytes != -1){
+			RingBufferWrite(&loopBackUART1,loopBackBuffer,numBytes);
+			uart1Timer = HAL_GetTick();
+		}
+	}
+	if ((RingBufferAvailable(&loopBackUART1) > 80) || ((HAL_GetTick() - uart1Timer) > 100)  ){
+		if (RingBufferAvailable(&loopBackUART1) > 0){
+			numBytes = RingBufferRead(&loopBackUART1,loopBackBuffer,RingBufferAvailable(&loopBackUART1));
+			if (numBytes != -1){
+				bytesOut = UARTWriteBuffer(&UART_1_STRUCT,loopBackBuffer,numBytes);
+				if (numBytes != bytesOut){
+					RingBufferWrite(&loopBackUART1,loopBackBuffer + bytesOut,numBytes - bytesOut);
+				}
+
+			}
+		}
+	}
+#endif
+#ifdef UART_2
+	static uint32_t uart2Timer;
+	if (UARTAvailabe(&UART_2_STRUCT) > 0){
+		numBytes = UARTGetBuffer(&UART_2_STRUCT,loopBackBuffer,UARTAvailabe(&UART_2_STRUCT));
+		if (numBytes != -1){
+			RingBufferWrite(&loopBackUART2,loopBackBuffer,numBytes);
+			uart2Timer = HAL_GetTick();
+		}
+	}
+	if ((RingBufferAvailable(&loopBackUART2) > 80) || ((HAL_GetTick() - uart2Timer) > 100)  ){
+		if (RingBufferAvailable(&loopBackUART2) > 0){
+			numBytes = RingBufferRead(&loopBackUART2,loopBackBuffer,RingBufferAvailable(&loopBackUART2));
+			if (numBytes != -1){
+				bytesOut = UARTWriteBuffer(&UART_2_STRUCT,loopBackBuffer,numBytes);
+				if (numBytes != bytesOut){
+					RingBufferWrite(&loopBackUART2,loopBackBuffer + bytesOut,numBytes - bytesOut);
+				}
+			}
+		}
+	}
+#endif
+#ifdef UART_3
+	static uint32_t uart3Timer;
+
+	if (UARTAvailabe(&UART_3_STRUCT) > 0){
+		numBytes = UARTGetBuffer(&UART_3_STRUCT,loopBackBuffer,UARTAvailabe(&UART_3_STRUCT));
+		if (numBytes != -1){
+			RingBufferWrite(&loopBackUART3,loopBackBuffer,numBytes);
+			uart3Timer = HAL_GetTick();
+		}
+	}
+	if ((RingBufferAvailable(&loopBackUART3) > 80) || ((HAL_GetTick() - uart3Timer) > 100)  ){
+		if (RingBufferAvailable(&loopBackUART3) > 0){
+			numBytes = RingBufferRead(&loopBackUART3,loopBackBuffer,RingBufferAvailable(&loopBackUART3));
+			if (numBytes != -1){
+				bytesOut = UARTWriteBuffer(&UART_3_STRUCT,loopBackBuffer,numBytes);
+				if (numBytes != bytesOut){
+					RingBufferWrite(&loopBackUART3,loopBackBuffer + bytesOut,numBytes - bytesOut);
+				}
+
+			}
+		}
+	}
+#endif
+#ifdef UART_4
+	static uint32_t uart4Timer;
+
+	if (UARTAvailabe(&UART_4_STRUCT) > 0){
+		numBytes = UARTGetBuffer(&UART_4_STRUCT,loopBackBuffer,UARTAvailabe(&UART_4_STRUCT));
+		if (numBytes != -1){
+			RingBufferWrite(&loopBackUART4,loopBackBuffer,numBytes);
+			uart4Timer = HAL_GetTick();
+		}
+	}
+	if ((RingBufferAvailable(&loopBackUART4) > 80) || ((HAL_GetTick() - uart4Timer) > 100)  ){
+		if (RingBufferAvailable(&loopBackUART4) > 0){
+			numBytes = RingBufferRead(&loopBackUART4,loopBackBuffer,RingBufferAvailable(&loopBackUART4));
+			if (numBytes != -1){
+				bytesOut = UARTWriteBuffer(&UART_4_STRUCT,loopBackBuffer,numBytes);
+				if (numBytes != bytesOut){
+					RingBufferWrite(&loopBackUART4,loopBackBuffer + bytesOut,numBytes - bytesOut);
+				}
+
+			}
+		}
+	}
+#endif
+#ifdef UART_5
+	static uint32_t uart5Timer;
+
+	if (UARTAvailabe(&UART_5_STRUCT) > 0){
+		numBytes = UARTGetBuffer(&UART_5_STRUCT,loopBackBuffer,UARTAvailabe(&UART_5_STRUCT));
+		if (numBytes != -1){
+			RingBufferWrite(&loopBackUART5,loopBackBuffer,numBytes);
+			uart5Timer = HAL_GetTick();
+		}
+	}
+	if ((RingBufferAvailable(&loopBackUART5) > 80) || ((HAL_GetTick() - uart5Timer) > 100)  ){
+		if (RingBufferAvailable(&loopBackUART5) > 0){
+			numBytes = RingBufferRead(&loopBackUART5,loopBackBuffer,RingBufferAvailable(&loopBackUART5));
+			if (numBytes != -1){
+				bytesOut = UARTWriteBuffer(&UART_5_STRUCT,loopBackBuffer,numBytes);
+				if (numBytes != bytesOut){
+					RingBufferWrite(&loopBackUART5,loopBackBuffer + bytesOut,numBytes - bytesOut);
+				}
+
+			}
+		}
+	}
+#endif
+#ifdef UART_6
+	static uint32_t uart6Timer;
+
+	if (UARTAvailabe(&UART_6_STRUCT) > 0){
+		numBytes = UARTGetBuffer(&UART_6_STRUCT,loopBackBuffer,UARTAvailabe(&UART_6_STRUCT));
+		if (numBytes != -1){
+			RingBufferWrite(&loopBackUART6,loopBackBuffer,numBytes);
+			uart6Timer = HAL_GetTick();
+		}
+	}
+	if ((RingBufferAvailable(&loopBackUART6) > 80) || ((HAL_GetTick() - uart6Timer) > 100)  ){
+		if (RingBufferAvailable(&loopBackUART6) > 0){
+			numBytes = RingBufferRead(&loopBackUART6,loopBackBuffer,RingBufferAvailable(&loopBackUART6));
+			if (numBytes != -1){
+				bytesOut = UARTWriteBuffer(&UART_6_STRUCT,loopBackBuffer,numBytes);
+				if (numBytes != bytesOut){
+					RingBufferWrite(&loopBackUART6,loopBackBuffer + bytesOut,numBytes - bytesOut);
+				}
+
+			}
+		}
+	}
+#endif
+#ifdef UART_7
+	static uint32_t uart7Timer;
+
+	if (UARTAvailabe(&UART_7_STRUCT) > 0){
+		numBytes = UARTGetBuffer(&UART_7_STRUCT,loopBackBuffer,UARTAvailabe(&UART_7_STRUCT));
+		if (numBytes != -1){
+			RingBufferWrite(&loopBackUART7,loopBackBuffer,numBytes);
+			uart7Timer = HAL_GetTick();
+		}
+	}
+	if ((RingBufferAvailable(&loopBackUART7) > 80) || ((HAL_GetTick() - uart7Timer) > 100)  ){
+		if (RingBufferAvailable(&loopBackUART7) > 0){
+			numBytes = RingBufferRead(&loopBackUART7,loopBackBuffer,RingBufferAvailable(&loopBackUART7));
+			if (numBytes != -1){
+				bytesOut = UARTWriteBuffer(&UART_7_STRUCT,loopBackBuffer,numBytes);
+				if (numBytes != bytesOut){
+					RingBufferWrite(&loopBackUART7,loopBackBuffer + bytesOut,numBytes - bytesOut);
+				}
+
+			}
+		}
+	}
+#endif
+#ifdef UART_8
+	static uint32_t uart8Timer;
+
+	if (UARTAvailabe(&UART_8_STRUCT) > 0){
+		numBytes = UARTGetBuffer(&UART_8_STRUCT,loopBackBuffer,UARTAvailabe(&UART_8_STRUCT));
+		if (numBytes != -1){
+			RingBufferWrite(&loopBackUART8,loopBackBuffer,numBytes);
+			uart8Timer = HAL_GetTick();
+		}
+	}
+	if ((RingBufferAvailable(&loopBackUART8) > 80) || ((HAL_GetTick() - uart8Timer) > 100)  ){
+		if (RingBufferAvailable(&loopBackUART8) > 0){
+			numBytes = RingBufferRead(&loopBackUART8,loopBackBuffer,RingBufferAvailable(&loopBackUART8));
+			if (numBytes != -1){
+				bytesOut = UARTWriteBuffer(&UART_8_STRUCT,loopBackBuffer,numBytes);
+				if (numBytes != bytesOut){
+					RingBufferWrite(&loopBackUART8,loopBackBuffer + bytesOut,numBytes - bytesOut);
+				}
+
+			}
+		}
+	}
 #endif
 }
+#endif
+//end uart-------------------------------------------------------
+//buffers
 void DoubleBufferCreate(DoubleBuffer_t *tb, uint8_t *buffer0, uint8_t *buffer1,int sizeOfBuffer){
 	tb->buffer0 = buffer0;
 	tb->buffer1 = buffer1;
@@ -656,8 +702,6 @@ void DoubleBufferCreate(DoubleBuffer_t *tb, uint8_t *buffer0, uint8_t *buffer1,i
 	tb->useBuffer0 = true;
 	tb->writing = false;
 }
-
-//called from UARTwrite when TX is in progress
 int DoubleBufferWrite(DoubleBuffer_t *tb, uint8_t *in, int count){
 
 	if (DoubleBufferFree(tb) == 0){
@@ -672,8 +716,6 @@ int DoubleBufferWrite(DoubleBuffer_t *tb, uint8_t *in, int count){
 	tb->writing = false;
 	return count;
 }
-
-//called after one of the buffers is sent with HAL_UART_Transmit_IT
 void DoubleBufferSwap(DoubleBuffer_t *tb){
 	tb->writeIdx = 0;
 	tb->useBuffer0 ^= true;
@@ -684,7 +726,6 @@ void DoubleBufferSwap(DoubleBuffer_t *tb){
 	}
 
 }
-
 int RingBufferAvailable(RingBuffer_t *rb) {
 	int readIndex = rb->readIdx;
 	int writeIndex = rb->writeIdx;
@@ -694,15 +735,21 @@ int RingBufferAvailable(RingBuffer_t *rb) {
 	 }
 	return available;
 }
-
 void RingBufferCreate(RingBuffer_t *rb, uint8_t *buffer, int sizeOfBuffer) {
 	rb->buffer = buffer;
 	rb->size = sizeOfBuffer;
 	rb->readIdx = 0;
 	rb->writeIdx = 0;
 }
-
-
+int RingBufferWriteByte(RingBuffer_t *rb, uint8_t *in) {
+	rb->readIdxTemp = rb->readIdx;
+	if (rb->readIdxTemp == ((rb->writeIdx + 1) % rb->size)){
+		return -1;
+	}
+	rb->buffer[rb->writeIdx] = in[0];
+	rb->writeIdx = (rb->writeIdx + (1)) % rb->size;
+	return 1;
+}
 int RingBufferWrite(RingBuffer_t *rb, uint8_t *in, int count) {
 	rb->readIdxTemp = rb->readIdx;
 	rb->availableWrite = rb->writeIdx - rb->readIdxTemp;
@@ -758,3 +805,9 @@ int RingBufferRead(RingBuffer_t *rb, uint8_t *out, int count){
 	return count;
 }
 
+//end buffers-------------------------------------------------------
+//ERROR CB
+void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart) {
+	//printf("u E: %i\nu S: %i\n", (int) HAL_UART_GetError(huart),(int) HAL_UART_GetState(huart));
+
+}
