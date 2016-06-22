@@ -69,7 +69,7 @@
 #include "stm32f4xx_hal.h"
 #include "stm32f4xx_hal_dma.h"
 #define UART_2
-#define UART_2_DMA_TX
+//#define UART_2_DMA_TX
 //#define UART_2_DMA_RX
 
 
@@ -100,7 +100,7 @@ typedef struct {
 	UART_HandleTypeDef *uartHandler;
 	RingBuffer_t *rxBuffer;
 	DoubleBuffer_t *txBuffer;
-	uint8_t* ISRBuf;
+	uint8_t *ISRBuf;
 	bool RXOverRun;
 	bool TXOverRun;
 	bool TXDMA;
@@ -156,10 +156,6 @@ UART_STRUCT UART_2_STRUCT;
 uint8_t UART_2_RX_BUFFER[UART_RING_BUF_SIZE_RX];
 uint8_t UART_2_TX_BUFFER1[UART_RING_BUF_SIZE_TX];
 uint8_t UART_2_TX_BUFFER2[UART_RING_BUF_SIZE_TX];
-#ifdef UART_2_DMA_TX
-#endif
-#ifdef UART_2_DMA_RX
-#endif
 uint8_t ISRBuffer_2[1];
 RingBuffer_t UART_2_RX_RING;
 DoubleBuffer_t UART_2_TX_DB;

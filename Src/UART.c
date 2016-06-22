@@ -72,32 +72,30 @@ void UARTInit() {
 	if (HAL_UART_GetState(&huart2) != HAL_UART_STATE_RESET){
 		RingBufferCreate(&UART_2_RX_RING, UART_2_RX_BUFFER,(int) UART_RING_BUF_SIZE_RX);
 		DoubleBufferCreate(&UART_2_TX_DB, UART_2_TX_BUFFER1,UART_2_TX_BUFFER2,(int) UART_RING_BUF_SIZE_TX);
+#ifdef UART_2_DMA_TX
+		UART_2_STRUCT.TXDMA = true;
+#else
+		UART_2_STRUCT.TXDMA = false;
+#endif
+#ifdef UART_2_DMA_RX
+		UART_2_STRUCT.RXDMA = true;
+#else
+		UART_2_STRUCT.RXDMA = false;
+#endif
 		UARTSetup(&UART_2_STRUCT, &huart2, &UART_2_RX_RING, &UART_2_TX_DB,ISRBuffer_2);
 		if (UART_2_STRUCT.RXDMA == true){
-			if (HAL_UART_Receive_DMA(UART_2_STRUCT.uartHandler, ISRBuffer_2, 1)!= HAL_OK) {
-#ifdef DEBUG_TO_CONSOLE
-				printf("uart2 was not enabled\n");
-#endif//DEBUG_TO_CONSOLE
-			}
+			HAL_UART_Receive_DMA(UART_2_STRUCT.uartHandler, ISRBuffer_2, 1);
 		}else{
-			if (HAL_UART_Receive_IT(UART_2_STRUCT.uartHandler, UART_2_STRUCT.rxBuffer->buffer, 1)!= HAL_OK) {
-#ifdef DEBUG_TO_CONSOLE
-				printf("uart2 was not enabled\n");
-#endif//DEBUG_TO_CONSOLE
-			}
+			HAL_UART_Receive_IT(UART_2_STRUCT.uartHandler, UART_2_STRUCT.rxBuffer->buffer, 1);
 		}
-
-	}else{
-#ifdef DEBUG_TO_CONSOLE
-		printf("uart2 was not enabled\n");
-#endif//DEBUG_TO_CONSOLE
-	}
 #ifdef LOOP_BACK_DEMO
 	RingBufferCreate(&loopBackUART2,loopBackUART2Buffer,UART_RING_BUF_SIZE_RX);
 	UARTWriteBuffer(&UART_2_STRUCT, testMessage0, sizeof(testMessage0) - 1);
 	UARTWriteBuffer(&UART_2_STRUCT, testMessage2, sizeof(testMessage2) - 1);
 	UARTWriteBuffer(&UART_2_STRUCT, testMessage0, sizeof(testMessage0) - 1);
 #endif
+	}
+
 #endif//UART_2
 #ifdef UART_3
 	if (HAL_UART_GetState(&huart3) != HAL_UART_STATE_RESET){
@@ -383,12 +381,7 @@ void UARTSetup(UART_STRUCT* uartS, UART_HandleTypeDef* uartH,RingBuffer_t* rbRX,
 	uartS->TXOverRun = false;
 	uartS->transmitting = false;
 
-#ifdef UART_2_DMA_TX
-	uartS->TXDMA = true;
-#endif
-#ifdef UART_2_DMA_RX
-	uartS->RXDMA = true;
-#endif
+
 }
 
 
