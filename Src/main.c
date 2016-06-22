@@ -40,6 +40,14 @@
 /* Private variables ---------------------------------------------------------*/
 UART_HandleTypeDef huart2;
 
+UART_HandleTypeDef huart1;
+UART_HandleTypeDef huart3;
+UART_HandleTypeDef huart4;
+UART_HandleTypeDef huart5;
+UART_HandleTypeDef huart6;
+UART_HandleTypeDef huart7;
+UART_HandleTypeDef huart8;
+
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
 #define DEBUG_TO_CONSOLE
@@ -157,7 +165,7 @@ static void MX_USART2_UART_Init(void)
 {
 
   huart2.Instance = USART2;
-  huart2.Init.BaudRate = 115200;
+  huart2.Init.BaudRate = 921600;
   huart2.Init.WordLength = UART_WORDLENGTH_8B;
   huart2.Init.StopBits = UART_STOPBITS_1;
   huart2.Init.Parity = UART_PARITY_NONE;
