@@ -156,11 +156,11 @@ UART_STRUCT UART_2_STRUCT;
 uint8_t UART_2_RX_BUFFER[UART_RING_BUF_SIZE_RX];
 uint8_t UART_2_TX_BUFFER1[UART_RING_BUF_SIZE_TX];
 uint8_t UART_2_TX_BUFFER2[UART_RING_BUF_SIZE_TX];
-
-uint8_t ISRBuffer_2[1];
-#ifdef UART_2_DMA_RX
-
+#ifdef UART_2_DMA_TX
 #endif
+#ifdef UART_2_DMA_RX
+#endif
+uint8_t ISRBuffer_2[1];
 RingBuffer_t UART_2_RX_RING;
 DoubleBuffer_t UART_2_TX_DB;
 extern UART_HandleTypeDef huart2;

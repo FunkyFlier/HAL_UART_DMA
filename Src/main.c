@@ -88,16 +88,10 @@ int main(void)
   MX_USART2_UART_Init();
 
   /* USER CODE BEGIN 2 */
+  UARTInit();
+  /* USER CODE END 2 */
 
-#ifdef DEBUG_TO_CONSOLE
-	initialise_monitor_handles();
-	printf("start\n");
-#endif
-	UARTInit();
-	UARTWriteBuffer(&UART_2_STRUCT, HWMessage1, sizeof(HWMessage1) - 1);
-	UARTWriteBuffer(&UART_2_STRUCT, HWMessage2, sizeof(HWMessage2) - 1);
-	UARTWriteBuffer(&UART_2_STRUCT, HWMessage3, sizeof(HWMessage3) - 1);
-
+  /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
@@ -186,7 +180,7 @@ static void MX_DMA_Init(void)
 
   /* DMA interrupt init */
   /* DMA1_Stream6_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(DMA1_Stream6_IRQn, 0, 0);
+  HAL_NVIC_SetPriority(DMA1_Stream6_IRQn, 1, 0);
   HAL_NVIC_EnableIRQ(DMA1_Stream6_IRQn);
 
 }

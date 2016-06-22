@@ -73,10 +73,6 @@ void UARTInit() {
 		RingBufferCreate(&UART_2_RX_RING, UART_2_RX_BUFFER,(int) UART_RING_BUF_SIZE_RX);
 		DoubleBufferCreate(&UART_2_TX_DB, UART_2_TX_BUFFER1,UART_2_TX_BUFFER2,(int) UART_RING_BUF_SIZE_TX);
 		UARTSetup(&UART_2_STRUCT, &huart2, &UART_2_RX_RING, &UART_2_TX_DB,ISRBuffer_2);
-#ifdef UART_2_DMA_RX
-#endif
-#ifdef UART_2_DMA_TX
-#endif
 		if (UART_2_STRUCT.RXDMA == true){
 			if (HAL_UART_Receive_DMA(UART_2_STRUCT.uartHandler, ISRBuffer_2, 1)!= HAL_OK) {
 #ifdef DEBUG_TO_CONSOLE
