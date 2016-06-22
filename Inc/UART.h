@@ -75,14 +75,14 @@
 #include "stm32f4xx_hal_dma.h"
 
 #define UART_1
-#define UART_1_DMA_TX
+//#define UART_1_DMA_TX
 #define UART_1_DMA_RX
 #define UART_2
-#define UART_2_DMA_TX
-#define UART_2_DMA_RX
+//#define UART_2_DMA_TX
+//#define UART_2_DMA_RX
 #define UART_6
 #define UART_6_DMA_TX
-#define UART_6_DMA_RX
+//#define UART_6_DMA_RX
 
 #define LOOP_BACK_DEMO
 
@@ -98,6 +98,7 @@ typedef struct{
 	volatile int writeIdx,writeIdxTemp;
 	volatile int readIdx,readIdxTemp;
 	volatile int availableWrite,availableRead;
+	volatile bool overFlow;
 }RingBuffer_t;
 
 typedef struct{

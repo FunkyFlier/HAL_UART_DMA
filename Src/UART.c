@@ -301,8 +301,11 @@ void UARTInit() {
 }
 //general
 int UARTWriteBuffer(UART_STRUCT* uartS, uint8_t* buff, int n) {
-	if (n < DoubleBufferWrite(uartS->txBuffer, buff, n)){
+	n = DoubleBufferWrite(uartS->txBuffer, buff, n);
+
+	if (n == -1){
 		uartS->TXOverRun = true;
+		return n;
 	}
 	if (DoubleBufferAvailable(uartS->txBuffer) > 0){
 		if (uartS->TXDMA == true){
@@ -523,7 +526,11 @@ void UARTLoopDemo(){
 			if (numBytes != -1){
 				bytesOut = UARTWriteBuffer(&UART_1_STRUCT,loopBackBuffer,numBytes);
 				if (numBytes != bytesOut){
-					RingBufferWrite(&loopBackUART1,loopBackBuffer + bytesOut,numBytes - bytesOut);
+					if (bytesOut == -1){
+						RingBufferWrite(&loopBackUART1,loopBackBuffer ,numBytes );
+					}else{
+						RingBufferWrite(&loopBackUART1,loopBackBuffer + bytesOut,numBytes - bytesOut);
+					}
 				}
 
 			}
@@ -545,7 +552,11 @@ void UARTLoopDemo(){
 			if (numBytes != -1){
 				bytesOut = UARTWriteBuffer(&UART_2_STRUCT,loopBackBuffer,numBytes);
 				if (numBytes != bytesOut){
-					RingBufferWrite(&loopBackUART2,loopBackBuffer + bytesOut,numBytes - bytesOut);
+					if (bytesOut == -1){
+						RingBufferWrite(&loopBackUART2,loopBackBuffer ,numBytes );
+					}else{
+						RingBufferWrite(&loopBackUART2,loopBackBuffer + bytesOut,numBytes - bytesOut);
+					}
 				}
 			}
 		}
@@ -636,7 +647,11 @@ void UARTLoopDemo(){
 			if (numBytes != -1){
 				bytesOut = UARTWriteBuffer(&UART_6_STRUCT,loopBackBuffer,numBytes);
 				if (numBytes != bytesOut){
-					RingBufferWrite(&loopBackUART6,loopBackBuffer + bytesOut,numBytes - bytesOut);
+					if (bytesOut == -1){
+						RingBufferWrite(&loopBackUART6,loopBackBuffer ,numBytes );
+					}else{
+						RingBufferWrite(&loopBackUART6,loopBackBuffer + bytesOut,numBytes - bytesOut);
+					}
 				}
 
 			}
@@ -740,8 +755,10 @@ void RingBufferCreate(RingBuffer_t *rb, uint8_t *buffer, int sizeOfBuffer) {
 	rb->size = sizeOfBuffer;
 	rb->readIdx = 0;
 	rb->writeIdx = 0;
+	rb->overFlow = false;
 }
 int RingBufferWriteByte(RingBuffer_t *rb, uint8_t *in) {
+	//overflow flag not needed here because Write and Write Byte should not be used with the same RB
 	rb->readIdxTemp = rb->readIdx;
 	if (rb->readIdxTemp == ((rb->writeIdx + 1) % rb->size)){
 		return -1;
@@ -757,14 +774,23 @@ int RingBufferWrite(RingBuffer_t *rb, uint8_t *in, int count) {
 		rb->availableWrite += rb->size;
 	}
 	if (rb->availableWrite >= rb->size){
-		return -1;
+		printf("avail err\n");
+		return -2;
 	}
+
 	if(rb->availableWrite == 0){
-		rb->writeIdx = rb->readIdx = 0;
+		if (rb->overFlow == false){
+			rb->writeIdx = rb->readIdx = 0;
+		}else{
+			return -1;
+		}
+	}else{
+		rb->overFlow = false;
 	}
 
 	if ((rb->size - rb->availableWrite) < count){
 		count = (rb->size -rb->availableWrite);
+		rb->overFlow = true;
 	}
 	if (RingWriteIdxToEnd(rb) >= count){
 		memcpy(rb->buffer + rb->writeIdx, in, count);
