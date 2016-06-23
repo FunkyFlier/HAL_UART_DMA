@@ -78,16 +78,16 @@
 //#define UART_1_DMA_TX
 #define UART_1_DMA_RX
 #define UART_2
-//#define UART_2_DMA_TX
-//#define UART_2_DMA_RX
+#define UART_2_DMA_TX
+#define UART_2_DMA_RX
 #define UART_6
 #define UART_6_DMA_TX
 //#define UART_6_DMA_RX
 
 #define LOOP_BACK_DEMO
 
-#define UART_RING_BUF_SIZE_RX 128
-#define UART_RING_BUF_SIZE_TX 128
+#define UART_RING_BUF_SIZE_RX 256
+#define UART_RING_BUF_SIZE_TX 256
 
 
 //user defines----------------------

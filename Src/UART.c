@@ -526,11 +526,12 @@ void UARTLoopDemo(){
 			if (numBytes != -1){
 				bytesOut = UARTWriteBuffer(&UART_1_STRUCT,loopBackBuffer,numBytes);
 				if (numBytes != bytesOut){
-					if (bytesOut == -1){
-						RingBufferWrite(&loopBackUART1,loopBackBuffer ,numBytes );
+					if (numBytes < 0){
+						RingBufferWrite(&loopBackUART1,loopBackBuffer,numBytes);
 					}else{
 						RingBufferWrite(&loopBackUART1,loopBackBuffer + bytesOut,numBytes - bytesOut);
 					}
+
 				}
 
 			}
@@ -551,12 +552,10 @@ void UARTLoopDemo(){
 			numBytes = RingBufferRead(&loopBackUART2,loopBackBuffer,RingBufferAvailable(&loopBackUART2));
 			if (numBytes != -1){
 				bytesOut = UARTWriteBuffer(&UART_2_STRUCT,loopBackBuffer,numBytes);
-				if (numBytes != bytesOut){
-					if (bytesOut == -1){
-						RingBufferWrite(&loopBackUART2,loopBackBuffer ,numBytes );
-					}else{
-						RingBufferWrite(&loopBackUART2,loopBackBuffer + bytesOut,numBytes - bytesOut);
-					}
+				if (numBytes < 0){
+					RingBufferWrite(&loopBackUART2,loopBackBuffer,numBytes);
+				}else{
+					RingBufferWrite(&loopBackUART2,loopBackBuffer + bytesOut,numBytes - bytesOut);
 				}
 			}
 		}
@@ -646,12 +645,10 @@ void UARTLoopDemo(){
 			numBytes = RingBufferRead(&loopBackUART6,loopBackBuffer,RingBufferAvailable(&loopBackUART6));
 			if (numBytes != -1){
 				bytesOut = UARTWriteBuffer(&UART_6_STRUCT,loopBackBuffer,numBytes);
-				if (numBytes != bytesOut){
-					if (bytesOut == -1){
-						RingBufferWrite(&loopBackUART6,loopBackBuffer ,numBytes );
-					}else{
-						RingBufferWrite(&loopBackUART6,loopBackBuffer + bytesOut,numBytes - bytesOut);
-					}
+				if (numBytes < 0){
+					RingBufferWrite(&loopBackUART6,loopBackBuffer,numBytes);
+				}else{
+					RingBufferWrite(&loopBackUART6,loopBackBuffer + bytesOut,numBytes - bytesOut);
 				}
 
 			}
@@ -767,6 +764,32 @@ int RingBufferWriteByte(RingBuffer_t *rb, uint8_t *in) {
 	rb->writeIdx = (rb->writeIdx + (1)) % rb->size;
 	return 1;
 }
+/*int RingBufferWrite(RingBuffer_t *rb, uint8_t *in, int count) {
+	rb->readIdxTemp = rb->readIdx;
+	rb->availableWrite = rb->writeIdx - rb->readIdxTemp;
+	if (rb->availableWrite < 0){
+		rb->availableWrite += rb->size;
+	}
+	if (rb->availableWrite >= rb->size){
+		return -1;
+	}
+	if(rb->availableWrite == 0){
+		rb->writeIdx = rb->readIdx = 0;
+	}
+
+	if ((rb->size - rb->availableWrite) < count){
+		count = (rb->size -rb->availableWrite);
+	}
+	if (RingWriteIdxToEnd(rb) >= count){
+		memcpy(rb->buffer + rb->writeIdx, in, count);
+	}else{
+		memcpy(rb->buffer + rb->writeIdx, in, RingWriteIdxToEnd(rb));
+		memcpy(rb->buffer, in + RingWriteIdxToEnd(rb), count - RingWriteIdxToEnd(rb));
+	}
+	RingBufferCommitWrite(rb, count);
+	return count;
+}*/
+
 int RingBufferWrite(RingBuffer_t *rb, uint8_t *in, int count) {
 	rb->readIdxTemp = rb->readIdx;
 	rb->availableWrite = rb->writeIdx - rb->readIdxTemp;
