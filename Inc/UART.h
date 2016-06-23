@@ -86,8 +86,8 @@
 
 #define LOOP_BACK_DEMO
 
-#define UART_RING_BUF_SIZE_RX 256
-#define UART_RING_BUF_SIZE_TX 256
+#define UART_RING_BUF_SIZE_RX 64
+#define UART_RING_BUF_SIZE_TX 64
 
 
 //user defines----------------------
@@ -98,7 +98,7 @@ typedef struct{
 	volatile int writeIdx,writeIdxTemp;
 	volatile int readIdx,readIdxTemp;
 	volatile int availableWrite,availableRead;
-	volatile bool overFlow;
+	volatile bool full,reading;
 }RingBuffer_t;
 
 typedef struct{

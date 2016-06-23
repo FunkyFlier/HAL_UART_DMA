@@ -355,6 +355,9 @@ void UARTRXCallBackHandler(UART_STRUCT* uartS) {
 
 	}else{
 		uartS->rxBuffer->readIdxTemp = uartS->rxBuffer->readIdx;
+		if (uartS->rxBuffer->readIdxTemp == ((uartS->rxBuffer->writeIdx + 1) % uartS->rxBuffer->size)){
+			uartS->rxBuffer->full = true;
+		}
 
 		if (uartS->rxBuffer->readIdxTemp == ((uartS->rxBuffer->writeIdx + 1) % uartS->rxBuffer->size)){
 			uartS->RXOverRun = true;
@@ -520,18 +523,15 @@ void UARTLoopDemo(){
 			uart1Timer = HAL_GetTick();
 		}
 	}
-	if ((RingBufferAvailable(&loopBackUART1) > 80) || ((HAL_GetTick() - uart1Timer) > 100)  ){
+	if ((RingBufferAvailable(&loopBackUART1) > (UART_RING_BUF_SIZE_RX / 2)) || ((HAL_GetTick() - uart1Timer) > 100)  ){
 		if (RingBufferAvailable(&loopBackUART1) > 0){
 			numBytes = RingBufferRead(&loopBackUART1,loopBackBuffer,RingBufferAvailable(&loopBackUART1));
-			if (numBytes != -1){
+			if (numBytes > 0){
 				bytesOut = UARTWriteBuffer(&UART_1_STRUCT,loopBackBuffer,numBytes);
-				if (numBytes != bytesOut){
-					if (numBytes < 0){
-						RingBufferWrite(&loopBackUART1,loopBackBuffer,numBytes);
-					}else{
-						RingBufferWrite(&loopBackUART1,loopBackBuffer + bytesOut,numBytes - bytesOut);
-					}
-
+				if (bytesOut < 0){
+					RingBufferWrite(&loopBackUART1,loopBackBuffer,numBytes);
+				}else{
+					RingBufferWrite(&loopBackUART1,loopBackBuffer + bytesOut,numBytes - bytesOut);
 				}
 
 			}
@@ -540,6 +540,7 @@ void UARTLoopDemo(){
 #endif
 #ifdef UART_2
 	static uint32_t uart2Timer;
+
 	if (UARTAvailabe(&UART_2_STRUCT) > 0){
 		numBytes = UARTGetBuffer(&UART_2_STRUCT,loopBackBuffer,UARTAvailabe(&UART_2_STRUCT));
 		if (numBytes != -1){
@@ -547,7 +548,7 @@ void UARTLoopDemo(){
 			uart2Timer = HAL_GetTick();
 		}
 	}
-	if ((RingBufferAvailable(&loopBackUART2) > 80) || ((HAL_GetTick() - uart2Timer) > 100)  ){
+	if ((RingBufferAvailable(&loopBackUART2) > (UART_RING_BUF_SIZE_RX / 2)) || ((HAL_GetTick() - uart2Timer) > 100)  ){
 		if (RingBufferAvailable(&loopBackUART2) > 0){
 			numBytes = RingBufferRead(&loopBackUART2,loopBackBuffer,RingBufferAvailable(&loopBackUART2));
 			if (numBytes != -1){
@@ -557,6 +558,7 @@ void UARTLoopDemo(){
 				}else{
 					RingBufferWrite(&loopBackUART2,loopBackBuffer + bytesOut,numBytes - bytesOut);
 				}
+
 			}
 		}
 	}
@@ -571,12 +573,14 @@ void UARTLoopDemo(){
 			uart3Timer = HAL_GetTick();
 		}
 	}
-	if ((RingBufferAvailable(&loopBackUART3) > 80) || ((HAL_GetTick() - uart3Timer) > 100)  ){
+	if ((RingBufferAvailable(&loopBackUART3) > (UART_RING_BUF_SIZE_RX / 2)) || ((HAL_GetTick() - uart3Timer) > 100)  ){
 		if (RingBufferAvailable(&loopBackUART3) > 0){
 			numBytes = RingBufferRead(&loopBackUART3,loopBackBuffer,RingBufferAvailable(&loopBackUART3));
 			if (numBytes != -1){
 				bytesOut = UARTWriteBuffer(&UART_3_STRUCT,loopBackBuffer,numBytes);
-				if (numBytes != bytesOut){
+				if (numBytes < 0){
+					RingBufferWrite(&loopBackUART3,loopBackBuffer,numBytes);
+				}else{
 					RingBufferWrite(&loopBackUART3,loopBackBuffer + bytesOut,numBytes - bytesOut);
 				}
 
@@ -594,12 +598,14 @@ void UARTLoopDemo(){
 			uart4Timer = HAL_GetTick();
 		}
 	}
-	if ((RingBufferAvailable(&loopBackUART4) > 80) || ((HAL_GetTick() - uart4Timer) > 100)  ){
+	if ((RingBufferAvailable(&loopBackUART4) > (UART_RING_BUF_SIZE_RX / 2)) || ((HAL_GetTick() - uart4Timer) > 100)  ){
 		if (RingBufferAvailable(&loopBackUART4) > 0){
 			numBytes = RingBufferRead(&loopBackUART4,loopBackBuffer,RingBufferAvailable(&loopBackUART4));
 			if (numBytes != -1){
 				bytesOut = UARTWriteBuffer(&UART_4_STRUCT,loopBackBuffer,numBytes);
-				if (numBytes != bytesOut){
+				if (numBytes < 0){
+					RingBufferWrite(&loopBackUART4,loopBackBuffer,numBytes);
+				}else{
 					RingBufferWrite(&loopBackUART4,loopBackBuffer + bytesOut,numBytes - bytesOut);
 				}
 
@@ -617,12 +623,14 @@ void UARTLoopDemo(){
 			uart5Timer = HAL_GetTick();
 		}
 	}
-	if ((RingBufferAvailable(&loopBackUART5) > 80) || ((HAL_GetTick() - uart5Timer) > 100)  ){
+	if ((RingBufferAvailable(&loopBackUART5) > (UART_RING_BUF_SIZE_RX / 2)) || ((HAL_GetTick() - uart5Timer) > 100)  ){
 		if (RingBufferAvailable(&loopBackUART5) > 0){
 			numBytes = RingBufferRead(&loopBackUART5,loopBackBuffer,RingBufferAvailable(&loopBackUART5));
 			if (numBytes != -1){
 				bytesOut = UARTWriteBuffer(&UART_5_STRUCT,loopBackBuffer,numBytes);
-				if (numBytes != bytesOut){
+				if (numBytes < 0){
+					RingBufferWrite(&loopBackUART5,loopBackBuffer,numBytes);
+				}else{
 					RingBufferWrite(&loopBackUART5,loopBackBuffer + bytesOut,numBytes - bytesOut);
 				}
 
@@ -640,7 +648,7 @@ void UARTLoopDemo(){
 			uart6Timer = HAL_GetTick();
 		}
 	}
-	if ((RingBufferAvailable(&loopBackUART6) > 80) || ((HAL_GetTick() - uart6Timer) > 100)  ){
+	if ((RingBufferAvailable(&loopBackUART6) > (UART_RING_BUF_SIZE_RX / 2)) || ((HAL_GetTick() - uart6Timer) > 100)  ){
 		if (RingBufferAvailable(&loopBackUART6) > 0){
 			numBytes = RingBufferRead(&loopBackUART6,loopBackBuffer,RingBufferAvailable(&loopBackUART6));
 			if (numBytes != -1){
@@ -665,12 +673,14 @@ void UARTLoopDemo(){
 			uart7Timer = HAL_GetTick();
 		}
 	}
-	if ((RingBufferAvailable(&loopBackUART7) > 80) || ((HAL_GetTick() - uart7Timer) > 100)  ){
+	if ((RingBufferAvailable(&loopBackUART7) > (UART_RING_BUF_SIZE_RX / 2)) || ((HAL_GetTick() - uart7Timer) > 100)  ){
 		if (RingBufferAvailable(&loopBackUART7) > 0){
 			numBytes = RingBufferRead(&loopBackUART7,loopBackBuffer,RingBufferAvailable(&loopBackUART7));
 			if (numBytes != -1){
 				bytesOut = UARTWriteBuffer(&UART_7_STRUCT,loopBackBuffer,numBytes);
-				if (numBytes != bytesOut){
+				if (numBytes < 0){
+					RingBufferWrite(&loopBackUART7,loopBackBuffer,numBytes);
+				}else{
 					RingBufferWrite(&loopBackUART7,loopBackBuffer + bytesOut,numBytes - bytesOut);
 				}
 
@@ -688,12 +698,14 @@ void UARTLoopDemo(){
 			uart8Timer = HAL_GetTick();
 		}
 	}
-	if ((RingBufferAvailable(&loopBackUART8) > 80) || ((HAL_GetTick() - uart8Timer) > 100)  ){
+	if ((RingBufferAvailable(&loopBackUART8) > (UART_RING_BUF_SIZE_RX / 2)) || ((HAL_GetTick() - uart8Timer) > 100)  ){
 		if (RingBufferAvailable(&loopBackUART8) > 0){
 			numBytes = RingBufferRead(&loopBackUART8,loopBackBuffer,RingBufferAvailable(&loopBackUART8));
 			if (numBytes != -1){
 				bytesOut = UARTWriteBuffer(&UART_8_STRUCT,loopBackBuffer,numBytes);
-				if (numBytes != bytesOut){
+				if (numBytes < 0){
+					RingBufferWrite(&loopBackUART8,loopBackBuffer,numBytes);
+				}else{
 					RingBufferWrite(&loopBackUART8,loopBackBuffer + bytesOut,numBytes - bytesOut);
 				}
 
@@ -752,106 +764,102 @@ void RingBufferCreate(RingBuffer_t *rb, uint8_t *buffer, int sizeOfBuffer) {
 	rb->size = sizeOfBuffer;
 	rb->readIdx = 0;
 	rb->writeIdx = 0;
-	rb->overFlow = false;
+	rb->reading = false;
+	rb->full = false;
 }
 int RingBufferWriteByte(RingBuffer_t *rb, uint8_t *in) {
-	//overflow flag not needed here because Write and Write Byte should not be used with the same RB
-	rb->readIdxTemp = rb->readIdx;
-	if (rb->readIdxTemp == ((rb->writeIdx + 1) % rb->size)){
+	if (rb->full == true){
 		return -1;
+	}
+	if (rb->reading == false){
+		if (rb->writeIdx == rb->readIdxTemp){
+			rb->writeIdx = rb->readIdx = 0;
+		}
 	}
 	rb->buffer[rb->writeIdx] = in[0];
+	if (rb->readIdxTemp == ((rb->writeIdx + 1) % rb->size)){
+		rb->full = true;
+	}
 	rb->writeIdx = (rb->writeIdx + (1)) % rb->size;
 	return 1;
-}
-/*int RingBufferWrite(RingBuffer_t *rb, uint8_t *in, int count) {
-	rb->readIdxTemp = rb->readIdx;
-	rb->availableWrite = rb->writeIdx - rb->readIdxTemp;
-	if (rb->availableWrite < 0){
-		rb->availableWrite += rb->size;
-	}
-	if (rb->availableWrite >= rb->size){
-		return -1;
-	}
-	if(rb->availableWrite == 0){
-		rb->writeIdx = rb->readIdx = 0;
-	}
 
-	if ((rb->size - rb->availableWrite) < count){
-		count = (rb->size -rb->availableWrite);
-	}
-	if (RingWriteIdxToEnd(rb) >= count){
-		memcpy(rb->buffer + rb->writeIdx, in, count);
-	}else{
-		memcpy(rb->buffer + rb->writeIdx, in, RingWriteIdxToEnd(rb));
-		memcpy(rb->buffer, in + RingWriteIdxToEnd(rb), count - RingWriteIdxToEnd(rb));
-	}
-	RingBufferCommitWrite(rb, count);
-	return count;
-}*/
+}
+
 
 int RingBufferWrite(RingBuffer_t *rb, uint8_t *in, int count) {
+	if ((count <= 0) || (count > UART_RING_BUF_SIZE_RX)){
+		return -2;//check for bad requested size
+	}
 	rb->readIdxTemp = rb->readIdx;
+	if (rb->full == true){
+		return -1;
+	}
+	//get # available to write
 	rb->availableWrite = rb->writeIdx - rb->readIdxTemp;
-	if (rb->availableWrite < 0){
+	if (rb->availableWrite <= 0){
 		rb->availableWrite += rb->size;
 	}
-	if (rb->availableWrite >= rb->size){
-		printf("avail err\n");
-		return -2;
+	if ((rb->availableWrite == rb->size) && (rb->reading == false)){
+		rb->writeIdx = rb->readIdx = 0;//if buffer empty reset pointers to start of buffer
 	}
-
-	if(rb->availableWrite == 0){
-		if (rb->overFlow == false){
-			rb->writeIdx = rb->readIdx = 0;
-		}else{
-			return -1;
+	if (count >= rb->availableWrite){//requested to write more bytes than space
+		count = rb->availableWrite;
+		if (RingWriteIdxToEnd(rb) >= count){//write to buffer
+			memcpy(rb->buffer + rb->writeIdx, in, count);
+		}else{//handle wrap
+			memcpy(rb->buffer + rb->writeIdx, in, RingWriteIdxToEnd(rb));
+			memcpy(rb->buffer, in + RingWriteIdxToEnd(rb), count - RingWriteIdxToEnd(rb));
 		}
-	}else{
-		rb->overFlow = false;
-	}
+		rb->full = true;
 
-	if ((rb->size - rb->availableWrite) < count){
-		count = (rb->size -rb->availableWrite);
-		rb->overFlow = true;
-	}
-	if (RingWriteIdxToEnd(rb) >= count){
-		memcpy(rb->buffer + rb->writeIdx, in, count);
 	}else{
-		memcpy(rb->buffer + rb->writeIdx, in, RingWriteIdxToEnd(rb));
-		memcpy(rb->buffer, in + RingWriteIdxToEnd(rb), count - RingWriteIdxToEnd(rb));
+		if (RingWriteIdxToEnd(rb) >= count){//write to buffer
+			memcpy(rb->buffer + rb->writeIdx, in, count);
+		}else{//handle wrap
+			memcpy(rb->buffer + rb->writeIdx, in, RingWriteIdxToEnd(rb));
+			memcpy(rb->buffer, in + RingWriteIdxToEnd(rb), count - RingWriteIdxToEnd(rb));
+		}
 	}
 	RingBufferCommitWrite(rb, count);
 	return count;
+
 }
 int RingBufferRead(RingBuffer_t *rb, uint8_t *out, int count){
+	if ((count <= 0) || (count > UART_RING_BUF_SIZE_RX)){
+		return -2;//check for bad requested size
+	}
+	rb->reading = true;
 	rb->writeIdxTemp = rb->writeIdx;
-	rb->availableRead = rb->writeIdxTemp - rb->readIdx;
-	if (rb->availableRead < 0){
-		rb->availableRead += rb->size;
+	if (rb->full == true){
+		rb->availableRead = rb->size;
+	}else{
+		if (rb->writeIdxTemp == rb->readIdx){
+			return -1;
+		}
+		rb->availableRead = rb->writeIdxTemp - rb->readIdx;
+		if (rb->availableRead < 0){//get number of bytes in buffer
+			rb->availableRead += rb->size;
+		}
 	}
-	if (rb->availableRead == 0){
-		return -1;
-	}
-
-	if (rb->availableRead < count){
+	if (count > rb->availableRead){
 		count = rb->availableRead;
 	}
-	if (rb->writeIdxTemp > rb->readIdx){
+	if (rb->readIdx < rb->writeIdxTemp){
 		memcpy(out, rb->buffer + rb->readIdx, count);
 		RingBufferCommitRead(rb,count);
-		return count;
-	}
-	if (RingReadIdxToEnd(rb) >= count){
-		memcpy(out, rb->buffer + rb->readIdx, count);
-		RingBufferCommitRead(rb,count);
-		return count;
 	}else{
-		memcpy(out, rb->buffer + rb->readIdx, RingReadIdxToEnd(rb));
-		memcpy(out, rb->buffer , count - RingReadIdxToEnd(rb));
+		if (RingReadIdxToEnd(rb) >= count){
+			memcpy(out, rb->buffer + rb->readIdx, count);
+		}else{
+			memcpy(out, rb->buffer + rb->readIdx, RingReadIdxToEnd(rb));
+			memcpy(out, rb->buffer , count - RingReadIdxToEnd(rb));
+		}
 	}
 	RingBufferCommitRead(rb,count);
+	rb->full = false;
+	rb->reading = false;
 	return count;
+
 }
 
 //end buffers-------------------------------------------------------
